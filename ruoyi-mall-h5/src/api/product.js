@@ -6,7 +6,7 @@ export function list(query = {}, page = 0, size = 12) {
     url: '/no-auth/product/list',
     method: 'post',
     params: { page, size },
-    data: query
+    data: { ...query, publishStatus: 1 }
   })
 }
 

@@ -43,6 +43,8 @@ const categories = ref([])
 const products = ref([])
 const catLoading = ref(false)
 const loading = ref(false)
+const currentPage = ref(0)
+const pageCount = ref(1)
 
 onMounted(() => {
   loadCategories()
@@ -64,11 +66,11 @@ async function loadCategories() {
 async function loadProducts() {
   loading.value = true
   try {
-    // 随机起始页，模拟"换一批"
-    const page = Math.floor(Math.random() * 3)
+    const page = currentPage.value
     const res = await productList({}, page, 12)
     const data = res.data || {}
     products.value = data.records || []
+    pageCount.value = Math.max(1, Math.ceil((data.total || 0) / 12))
   } catch (e) {
     console.error('商品加载失败', e)
   } finally {
@@ -77,6 +79,8 @@ async function loadProducts() {
 }
 
 function loadMore() {
+  if (loading.value) return
+  currentPage.value = (currentPage.value + 1) % pageCount.value
   loadProducts()
 }
 </script>

@@ -99,7 +99,7 @@
             <span>总数： </span>
             <span style="color: red;">{{ scope.row.buyNum }}</span>
           </div>
-          <div>实付： ￥{{ scope.row.payAmount }}</div>
+          <div>实付： {{ scope.row.payAmount }} {{ scope.row.payType === 3 ? '积分' : '元' }}</div>
         </template>
       </el-table-column>
       <el-table-column label="商品规格" prop="productList" width="280">
@@ -653,6 +653,8 @@ export default {
           return '支付宝';
         case 2:
           return '微信';
+        case 3:
+          return '积分支付';
       }
     },
     goDetail(row) {

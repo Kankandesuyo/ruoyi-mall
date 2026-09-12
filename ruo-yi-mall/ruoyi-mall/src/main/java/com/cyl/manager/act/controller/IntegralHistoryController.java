@@ -35,6 +35,25 @@ public class IntegralHistoryController extends BaseController {
     @Autowired
     private IntegralHistoryConvert convert;
 
+    @GetMapping("/signIn/resetStatus")
+    @PreAuthorize("@ss.hasPermi('system:config:edit')")
+    public ResponseEntity<?> signInResetStatus() {
+        return ResponseEntity.ok(service.signInResetStatus());
+    }
+
+    @lombok.Data
+    public static class SignInResetRequest {
+        private Long expectedVersion;
+    }
+
+    @PostMapping("/signIn/reset")
+    @PreAuthorize("@ss.hasPermi('system:config:edit')")
+    @Log(title = "重置所有会员今日签到", businessType = BusinessType.UPDATE)
+    public ResponseEntity<?> resetTodaySignIn(@RequestBody SignInResetRequest request) {
+        service.resetTodaySignIn(request.getExpectedVersion());
+        return ResponseEntity.ok().build();
+    }
+
     @ApiOperation("查询积分流水表列表")
     @PreAuthorize("@ss.hasPermi('act:integralHistory:list')")
     @PostMapping("/list")
@@ -65,7 +84,7 @@ public class IntegralHistoryController extends BaseController {
     @Log(title = "积分流水表", businessType = BusinessType.INSERT)
     @PostMapping
     public ResponseEntity<Integer> add(@RequestBody IntegralHistory integralHistory) {
-        return ResponseEntity.ok(service.insert(integralHistory));
+        return ResponseEntity.ok(service.adminChange(integralHistory));
     }
 
     @ApiOperation("修改积分流水表")

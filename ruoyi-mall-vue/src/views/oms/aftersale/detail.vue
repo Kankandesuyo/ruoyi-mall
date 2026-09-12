@@ -35,7 +35,7 @@
                     </el-table-column>
                     <el-table-column label="退款金额" prop="refundAmount">
                         <template v-slot="scope">
-                            ￥<span>{{ scope.row.refundAmount }}</span>
+                            <span>{{ scope.row.refundAmount }} {{ orderDetail.payType === 3 ? '积分' : '元' }}</span>
                         </template>
                     </el-table-column>
                     <el-table-column label="申请原因" prop="reason"></el-table-column>
@@ -101,7 +101,7 @@
                     <el-descriptions-item label="售后单号">{{ refundInfoDetail.id }}</el-descriptions-item>
                     <el-descriptions-item label="售后类型">{{ getAftersaleType(refundInfoDetail) }}</el-descriptions-item>
                     <el-descriptions-item label="申请售后时间">{{ parseTime(refundInfoDetail.applyRefundTime,'') }}</el-descriptions-item>
-                    <el-descriptions-item label="退款金额">￥{{ refundInfoDetail.refundAmount }}</el-descriptions-item>
+                    <el-descriptions-item label="退款金额">{{ refundInfoDetail.refundAmount }} {{ orderDetail.payType === 3 ? '积分' : '元' }}</el-descriptions-item>
                     <el-descriptions-item label="申请原因">{{ refundInfoDetail.reason }}</el-descriptions-item>
                     <el-descriptions-item label="具体描述">{{ refundInfoDetail.description }}</el-descriptions-item>
                     <el-descriptions-item label="凭证">
@@ -208,7 +208,7 @@ export default {
             return this.orderStatusMap.get(row.status + '')
         },
         getPayType(row) {
-            return this.payTypeMap.get(row.payType + '')
+            return Number(row.payType) === 3 ? '积分支付' : this.payTypeMap.get(row.payType + '')
         },
         getAftersaleType(row) {
             return this.aftersaleTypeMap.get(row.applyRefundType + '')

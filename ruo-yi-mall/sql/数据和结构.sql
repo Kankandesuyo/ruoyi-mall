@@ -952,6 +952,7 @@ CREATE TABLE `ums_member`  (
   `create_time` datetime(3) NULL DEFAULT NULL COMMENT '创建时间',
   `update_by` bigint(20) NULL DEFAULT NULL COMMENT '修改人',
   `update_time` datetime(3) NULL DEFAULT NULL COMMENT '修改时间',
+  UNIQUE INDEX `uk_member_phone_encrypted` (`phone_encrypted`) USING BTREE,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 47 CHARACTER SET = utf8 COLLATE = utf8_general_ci COMMENT = '会员信息';
 

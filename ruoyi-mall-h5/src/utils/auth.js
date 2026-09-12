@@ -11,11 +11,13 @@ export function setToken(token) {
 
 export function removeToken() {
   localStorage.removeItem(TOKEN_KEY)
+  removeUser()
+  sessionStorage.removeItem('checkout_items')
 }
 
 export function getUser() {
   const str = localStorage.getItem(USER_KEY)
-  return str ? JSON.parse(str) : null
+  try { return str ? JSON.parse(str) : null } catch { removeUser(); return null }
 }
 
 export function setUser(user) {

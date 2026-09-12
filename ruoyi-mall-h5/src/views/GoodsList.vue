@@ -8,7 +8,7 @@
           v-for="c in categories"
           :key="c.id"
           class="cat-item"
-          :class="{ active: query.categoryId === c.id }"
+          :class="{ active: String(query.categoryId) === String(c.id) }"
           @click="selectCategory(c.id)"
         >
           {{ c.name }}
@@ -57,6 +57,7 @@ const total = ref(0)
 const page = ref(0)
 const size = 12
 const loading = ref(false)
+let requestVersion = 0
 const catLoading = ref(false)
 const query = reactive({ keyword: '', categoryId: null })
 
@@ -99,19 +100,21 @@ async function loadCategories() {
 }
 
 async function loadProducts() {
+  const version = ++requestVersion
   loading.value = true
   try {
     const body = {}
     if (query.keyword) body.nameLike = query.keyword
     if (query.categoryId) body.categoryId = query.categoryId
     const res = await productList(body, page.value, size)
+    if (version !== requestVersion) return
     const data = res.data || {}
     products.value = data.records || []
     total.value = data.total || 0
   } catch (e) {
     console.error(e)
   } finally {
-    loading.value = false
+    if (version === requestVersion) loading.value = false
   }
 }
 </script>

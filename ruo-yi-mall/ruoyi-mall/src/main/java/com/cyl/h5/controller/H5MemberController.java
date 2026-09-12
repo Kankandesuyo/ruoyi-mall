@@ -7,6 +7,7 @@ import com.cyl.h5.domain.vo.RegisterVO;
 import com.cyl.h5.domain.vo.ValidatePhoneVO;
 import com.cyl.h5.domain.vo.WechatLoginVO;
 import com.cyl.h5.service.H5MemberService;
+import com.cyl.h5.service.H5MemberProfileService;
 import com.cyl.manager.ums.domain.vo.MemberVO;
 import com.ruoyi.common.core.domain.model.LoginMember;
 import com.ruoyi.framework.web.service.TokenService;
@@ -16,6 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.ruoyi.common.exception.ServiceException;
+import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -27,6 +31,18 @@ public class H5MemberController {
     private H5MemberService service;
     @Autowired
     private TokenService tokenService;
+    @Autowired
+    private H5MemberProfileService profileService;
+
+    @ApiOperation("修改自己的用户名和头像")
+    @PostMapping(value = "/member/profile", consumes = "multipart/form-data")
+    public ResponseEntity<MemberVO> updateProfile(HttpServletRequest request,
+            @RequestParam String nickname,
+            @RequestParam(required = false) MultipartFile avatar) throws IOException {
+        LoginMember loginMember = tokenService.getLoginMember(request);
+        if (loginMember == null) throw new ServiceException("请先登录", 401);
+        return ResponseEntity.ok(profileService.update(loginMember.getMemberId(), nickname, avatar));
+    }
 
 
     @ApiOperation("会员注册")

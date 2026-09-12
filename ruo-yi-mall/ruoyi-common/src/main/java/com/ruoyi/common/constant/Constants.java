@@ -194,6 +194,7 @@ public class Constants
      * 0->未支付；1->支付宝；2->微信
      */
     public static class PayType {
+        public static final Integer POINTS = 3;
         public static final Integer NO_PAY = 0;
         public static final Integer ALIPAY = 1;
         public static final Integer WECHAT = 2;

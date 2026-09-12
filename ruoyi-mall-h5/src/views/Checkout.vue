@@ -11,12 +11,12 @@
           :key="a.id"
           class="addr-item"
           :class="{ active: selectedAddrId === a.id }"
-          @click="selectedAddrId = a.id"
+          @click="!submitting && (selectedAddrId = a.id)"
         >
           <div class="addr-top">
             <span class="name">{{ a.name }}</span>
             <span class="phone">{{ a.phone }}</span>
-            <el-tag v-if="a.defaultStatus === 1 || a.isDefault === 1" size="small" type="danger">默认</el-tag>
+            <el-tag v-if="a.isDefault === 1" size="small" type="danger">默认</el-tag>
           </div>
           <div class="addr-detail">{{ fullAddress(a) }}</div>
         </div>
@@ -40,14 +40,19 @@
             <p class="name">{{ s.productName }}</p>
             <p v-if="s.spData" class="sp">规格：{{ formatSp(s.spData) }}</p>
           </div>
-          <span class="price">￥{{ formatPrice(s.price) }}</span>
+          <span class="price">{{ formatPrice(s.price) }} 积分</span>
           <span class="qty">x{{ s.quantity }}</span>
-          <span class="sub">￥{{ formatPrice(s.price * s.quantity) }}</span>
+          <span class="sub">{{ formatPrice(s.price * s.quantity) }} 积分</span>
         </div>
       </div>
-      <div v-else class="loading-text">正在加载商品信息...</div>
+      <div v-else class="loading-text">{{ loading ? '正在加载商品信息...' : '请选择地址，商品信息以后台校验为准' }}</div>
     </section>
 
+    <section class="block">
+      <div class="block-title">积分支付</div>
+      <p>可用积分：{{ points.balance }}。商品价格数值即所需积分，支付后等待商家发货。</p>
+      <el-button link type="primary" @click="$router.push('/points')">参加活动获取积分</el-button>
+    </section>
     <!-- 备注 -->
     <section class="block">
       <div class="block-title">订单备注</div>
@@ -57,26 +62,32 @@
     <!-- 结算栏 -->
     <div class="settle-bar">
       <div class="settle-left">
-        合计：<span class="total">￥{{ formatPrice(calcData.orderTotalAmount || calcData.productTotalAmount) }}</span>
+        合计：<span class="total">{{ formatPrice(calcData.orderTotalAmount ?? calcData.productTotalAmount) }} 积分</span>
       </div>
-      <el-button type="danger" size="large" :loading="submitting" :disabled="!selectedAddrId" @click="submitOrder">提交订单</el-button>
+      <el-button type="danger" size="large" :loading="submitting" :disabled="!selectedAddrId || !calcReady || loading" @click="submitOrder">提交订单</el-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Plus } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { list as addrList, getDefault as addrDefault } from '@/api/address'
+import { validSkuList } from '@/utils/contract'
+import { list as addrList } from '@/api/address'
 import { addOrderCheck, add as orderAdd } from '@/api/order'
 
+import { activity } from '@/api/points'
+const points = ref({ balance: '—' })
 const route = useRoute()
 const router = useRouter()
 
 const loading = ref(false)
 const submitting = ref(false)
+const calcReady = ref(false)
+let calcVersion = 0
+const emit = defineEmits(['cart-changed'])
 const addresses = ref([])
 const selectedAddrId = ref(null)
 const note = ref('')
@@ -86,15 +97,15 @@ const defaultImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/s
 let skuList = []
 
 onMounted(async () => {
-  buildSkuList()
+  if (!buildSkuList()) return
   await loadAddresses()
-  await calcOrder()
+  try { points.value = (await activity()).data } catch (e) {}
 })
 
 function buildSkuList() {
   const from = route.query.from
   if (from === 'buy') {
-    skuList = [{ skuId: Number(route.query.skuId), quantity: Number(route.query.quantity) || 1 }]
+    skuList = [{ skuId: Number(route.query.skuId), quantity: Number(route.query.quantity ?? 1) }]
   } else {
     // 从购物车结算，读 sessionStorage
     const str = sessionStorage.getItem('checkout_items')
@@ -102,10 +113,13 @@ function buildSkuList() {
       try { skuList = JSON.parse(str) } catch (e) { skuList = [] }
     }
   }
-  if (!skuList.length) {
-    ElMessage.error('没有可结算的商品')
-    router.back()
+  if (!validSkuList(skuList)) {
+    skuList = []
+    ElMessage.error('没有有效的结算商品，请重新选择')
+    router.replace('/cart')
+    return false
   }
+  return true
 }
 
 async function loadAddresses() {
@@ -113,7 +127,7 @@ async function loadAddresses() {
     const res = await addrList()
     addresses.value = res.data || []
     if (addresses.value.length) {
-      const def = addresses.value.find(a => a.defaultStatus === 1 || a.isDefault === 1)
+      const def = addresses.value.find(a => a.isDefault === 1)
       selectedAddrId.value = def ? def.id : addresses.value[0].id
     }
   } catch (e) {
@@ -121,27 +135,35 @@ async function loadAddresses() {
   }
 }
 
+watch(selectedAddrId, () => { calcReady.value = false; calcOrder() })
+
 async function calcOrder() {
-  if (!skuList.length) return
+  const version = ++calcVersion
+  calcReady.value = false
+  if (!validSkuList(skuList) || !selectedAddrId.value) return
   loading.value = true
   try {
     const res = await addOrderCheck({
       skuList,
       receiveAddressId: selectedAddrId.value,
       deliveryType: 1,
-      payType: 2,
+      payType: 3,
       note: note.value,
       from: route.query.from === 'buy' ? null : 'cart'
     })
-    Object.assign(calcData, res.data || {})
+    if (version !== calcVersion) return
+    if (!res.data?.skuList?.length || res.data.orderTotalAmount == null) throw new Error('订单算价结果不完整')
+    Object.assign(calcData, res.data)
+    calcReady.value = true
   } catch (e) {
     console.error(e)
   } finally {
-    loading.value = false
+    if (version === calcVersion) loading.value = false
   }
 }
 
 async function submitOrder() {
+  if (submitting.value || loading.value || !calcReady.value || !validSkuList(skuList)) return
   if (!selectedAddrId.value) {
     ElMessage.warning('请选择收货地址')
     return
@@ -151,11 +173,13 @@ async function submitOrder() {
     const res = await orderAdd({
       addressId: selectedAddrId.value,
       note: note.value,
-      payType: 2,
+      payType: 3,
       from: route.query.from === 'buy' ? null : 'cart',
       skuList
     })
-    const orderId = res.data
+    if (!res.data) throw new Error('未返回订单编号')
+    calcReady.value = false
+    emit('cart-changed')
     sessionStorage.removeItem('checkout_items')
     ElMessage.success('下单成功')
     router.replace('/orders')
@@ -168,7 +192,11 @@ async function submitOrder() {
 
 function formatPrice(p) { return Number(p || 0).toFixed(2) }
 function formatSp(sp) {
-  try { const arr = JSON.parse(sp); if (Array.isArray(arr)) return arr.map(i => i.value).join(' / ') } catch (e) {}
+  try {
+    const arr = JSON.parse(sp)
+    if (Array.isArray(arr)) return arr.map(i => i.value).join(' / ')
+    if (arr && typeof arr === 'object') return Object.values(arr).join(' / ')
+  } catch (e) {}
   return sp
 }
 function fullAddress(a) { return [a.province, a.city, a.district, a.detailAddress].filter(Boolean).join(' ') }

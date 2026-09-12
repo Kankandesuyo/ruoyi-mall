@@ -1,5 +1,5 @@
 <template>
-  <div class="layout">
+  <div class="layout" :class="'club-theme-'+theme">
     <header class="header">
       <div class="container header-inner">
         <div class="logo" @click="$router.push('/home')">
@@ -18,13 +18,14 @@
           </el-input>
         </div>
         <div class="actions">
+          <el-button @click="$router.push('/points')">积分活动</el-button>
           <el-badge :value="cartCount" :hidden="cartCount === 0" :max="99">
             <el-button :icon="ShoppingCart" @click="goCart">购物车</el-button>
           </el-badge>
           <template v-if="user">
             <el-dropdown @command="handleCommand">
               <span class="user-info">
-                <el-avatar :size="32" :src="user.avatar">{{ user.nickname?.charAt(0) }}</el-avatar>
+                <el-avatar :size="32" :src="avatarUrl(user.avatar)">{{ user.nickname?.charAt(0) }}</el-avatar>
                 <span class="nickname">{{ user.nickname || user.phone }}</span>
                 <el-icon><ArrowDown /></el-icon>
               </span>
@@ -44,7 +45,7 @@
     </header>
     <main class="main container">
       <router-view v-slot="{ Component }">
-        <component :is="Component" @cart-changed="loadCartCount" />
+        <component :is="Component" @cart-changed="loadCartCount" @profile-changed="user = getUser()" />
       </router-view>
     </main>
     <footer class="footer">
@@ -54,13 +55,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Search, ShoppingCart, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUser, removeToken, removeUser } from '@/utils/auth'
+import { avatarUrl } from '@/utils/avatar'
 import { count as cartCountApi } from '@/api/cart'
 
+import { levelCenter } from '@/api/level'
+const theme = ref('default')
+const route = useRoute()
+function setTheme(event) { theme.value = event.detail }
+window.addEventListener('member-theme', setTheme)
+onBeforeUnmount(() => window.removeEventListener('member-theme', setTheme))
+async function refreshTheme() { if (!getUser()) { theme.value='default'; return } try { theme.value=(await levelCenter()).data.appearance.theme } catch {} }
+watch(() => route.path, refreshTheme)
+onMounted(refreshTheme)
 const router = useRouter()
 const keyword = ref('')
 const user = ref(getUser())
@@ -99,6 +110,7 @@ function handleCommand(cmd) {
     ElMessageBox.confirm('确定退出登录吗？', '提示', { type: 'warning' }).then(() => {
       removeToken()
       removeUser()
+      theme.value = 'default'
       user.value = null
       cartCount.value = 0
       ElMessage.success('已退出登录')
@@ -171,3 +183,5 @@ function handleCommand(cmd) {
   font-size: 12px;
 }
 </style>
+
+<style scoped>.club-theme-ocean{background:#eff7fc;--el-color-primary:#287c9d}.club-theme-forest{background:#f0f7f0;--el-color-primary:#347657}</style>

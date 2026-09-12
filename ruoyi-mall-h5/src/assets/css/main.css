@@ -35,7 +35,7 @@ img {
 }
 
 .container {
-  width: 1200px;
+  width: min(1200px, calc(100% - 32px));
   margin: 0 auto;
 }
 
@@ -55,3 +55,28 @@ img {
 ::-webkit-scrollbar-thumb:hover {
   background: #ccc;
 }
+
+/* Keep the existing shopping flows usable on small screens. */
+@media (max-width: 768px) {
+  .header .header-inner { height: auto; padding: 12px 0; gap: 12px; flex-wrap: wrap; }
+  .header .search-box { order: 3; flex-basis: 100%; max-width: none; }
+  .header .actions { margin-left: auto; gap: 8px; }
+  .goods-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .goods-list { flex-direction: column; }
+  .goods-list .sidebar { width: 100%; }
+  .detail .top { flex-direction: column; gap: 20px; padding: 16px; }
+  .detail .gallery, .detail .main-pic { width: 100%; }
+  .detail .main-pic { height: auto; aspect-ratio: 1; }
+  .cart-page .cart-table { overflow-x: auto; }
+  .cart-table .table-head, .cart-table .table-row { min-width: 780px; }
+  .cart-table .table-foot { gap: 12px; flex-wrap: wrap; }
+  .cart-table .foot-right { flex-wrap: wrap; }
+  .orders-page .order-head, .orders-page .order-foot, .orders-page .foot-right { flex-wrap: wrap; gap: 12px; }
+  .orders-page .goods-row, .checkout-page .goods-row { grid-template-columns: 50px minmax(0, 1fr) 60px 30px; gap: 6px; }
+  .checkout-page .goods-row .sub { grid-column: 3 / -1; }
+  .checkout-page .addr-item { min-width: 0; width: 100%; }
+  .login-page .login-box { width: min(380px, calc(100% - 32px)); padding: 28px 20px; }
+  .el-dialog { max-width: calc(100% - 24px); }
+}
+.checkout-page .settle-bar { display: flex; align-items: center; justify-content: flex-end; gap: 20px; padding: 14px 16px; }
+.checkout-page .settle-bar .settle-left { width: auto; margin: 0; }

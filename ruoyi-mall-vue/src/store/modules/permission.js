@@ -31,7 +31,7 @@ const permission = {
   actions: {
     // 生成路由
     GenerateRoutes({ commit }) {
-      return new Promise(resolve => {
+      return new Promise((resolve, reject) => {
         // 向后端请求路由数据
         getRouters().then(res => {
           const sdata = JSON.parse(JSON.stringify(res.data))
@@ -46,7 +46,7 @@ const permission = {
           commit('SET_DEFAULT_ROUTES', sidebarRoutes)
           commit('SET_TOPBAR_ROUTES', sidebarRoutes)
           resolve(rewriteRoutes)
-        })
+        }).catch(reject)
       })
     }
   }

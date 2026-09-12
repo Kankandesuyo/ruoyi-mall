@@ -161,6 +161,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select
         id orderId,
         pay_id,
+        pay_type,
         order_sn,
         member_id,
         total_amount,
@@ -182,14 +183,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where
         delete_status=0
         and member_id=#{memberId}
-        <if test="status==-1">
-            and status in (1,2,3,4)
-        </if>
-        <if test="status>-1 and status&lt;3">
+        <if test="status != null and status >= 0 and status &lt;= 4">
             and status=#{status}
-            and aftersale_status=1
         </if>
-        <if test="status==-2">
+        <if test="status != null and status == -2">
             and aftersale_status in (2, 3)
         </if>
         order by create_time desc
@@ -198,6 +195,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select
         id orderId,
         pay_id,
+        pay_type,
         order_sn,
         member_id,
         total_amount,

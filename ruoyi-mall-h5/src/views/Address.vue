@@ -10,7 +10,7 @@
           <div class="line1">
             <span class="name">{{ a.name }}</span>
             <span class="phone">{{ a.phone }}</span>
-            <el-tag v-if="a.defaultStatus === 1 || a.isDefault === 1" size="small" type="danger">默认</el-tag>
+            <el-tag v-if="a.isDefault === 1" size="small" type="danger">默认</el-tag>
           </div>
           <div class="line2">{{ fullAddress(a) }}</div>
         </div>
@@ -39,7 +39,7 @@
           <el-input v-model="form.detailAddress" type="textarea" :rows="2" placeholder="街道、楼、门牌号" />
         </el-form-item>
         <el-form-item label="设为默认">
-          <el-switch v-model="form.defaultStatus" :active-value="1" :inactive-value="0" />
+          <el-switch v-model="form.isDefault" :active-value="1" :inactive-value="0" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -64,7 +64,7 @@ const formRef = ref(null)
 
 const form = reactive({
   id: null, name: '', phone: '', province: '', city: '', district: '',
-  detailAddress: '', defaultStatus: 0
+  detailAddress: '', isDefault: 0
 })
 const rules = {
   name: [{ required: true, message: '请输入收货人', trigger: 'blur' }],
@@ -93,19 +93,19 @@ function openDialog(row) {
     Object.assign(form, {
       id: row.id, name: row.name, phone: row.phone, province: row.province,
       city: row.city, district: row.district, detailAddress: row.detailAddress,
-      defaultStatus: row.defaultStatus ?? row.isDefault ?? 0
+      isDefault: row.isDefault ?? 0
     })
   } else {
     Object.assign(form, {
       id: null, name: '', phone: '', province: '', city: '', district: '',
-      detailAddress: '', defaultStatus: 0
+      detailAddress: '', isDefault: 0
     })
   }
   dialogVisible.value = true
 }
 
 async function save() {
-  if (!formRef.value) return
+  if (!formRef.value || saving.value) return
   await formRef.value.validate(async (valid) => {
     if (!valid) return
     saving.value = true

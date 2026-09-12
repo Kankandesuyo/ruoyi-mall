@@ -1,11 +1,11 @@
 import request from '@/utils/request'
 
-// 购物车商品数量（角标）
+// 使用会员购物车列表计算角标，避免 goodscount 使用管理端身份和 COUNT(quantity)。
 export function count() {
   return request({
-    url: '/h5/cart/goodscount',
+    url: '/h5/cart/list',
     method: 'get'
-  })
+  }).then(res => ({ ...res, data: (res.data || []).filter(item => item.status !== 0 && item.skuIfExist !== 0).reduce((sum, item) => sum + Number(item.quantity || 0), 0) }))
 }
 
 // 购物车列表
@@ -34,11 +34,12 @@ export function modify(data) {
   })
 }
 
-// 删除购物车项（后端 @RequestBody String，收到 JSON 数组字符串 "[1,2]"）
+// H5MemberCartService.deleteByIds 按逗号分隔解析 ID。
 export function remove(ids) {
   return request({
     url: '/h5/cart/remove',
     method: 'delete',
-    data: JSON.stringify(ids)
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+    data: ids.join(',')
   })
 }

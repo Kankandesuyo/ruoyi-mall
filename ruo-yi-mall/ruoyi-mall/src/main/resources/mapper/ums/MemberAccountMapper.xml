@@ -21,7 +21,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </update>
     <update id="updateIntegral">
         update ums_member_account set integral_balance = integral_balance - #{useIntegral},update_time = now()
-        where member_id = #{memberId}
+        where member_id = #{memberId} and #{useIntegral} > 0 and integral_balance >= #{useIntegral}
     </update>
 
     <select id="selectByEntity" parameterType="MemberAccount" resultMap="MemberAccountResult">

@@ -11,9 +11,6 @@
       <right-panel>
         <settings />
       </right-panel>
-      <div id="footer-global" :style="{left: !sidebar.opened ? '54px' : '200px'}">
-        <p class="bolder-font large-tip">技术支持：关注“程序员诚哥”微信公众号，回复：支持</p>
-      </div>
     </div>
   </div>
 </template>
@@ -114,14 +111,5 @@ export default {
   .mobile .fixed-header {
     width: 100%;
   }
-  #footer-global {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    padding: 12px;
-    box-shadow: -1px 0 12px 0 var(--gray-5);
-    transition: all .28s;
-    background-color: white;
-    z-index: 100;
-  }
+
 </style>

@@ -64,6 +64,8 @@ public class MemberAccountService {
      * @return 结果
      */
     public int insert(MemberAccount memberAccount) {
+        memberAccount.setIntegralBalance(BigDecimal.ZERO);
+        memberAccount.setTotalIntegralBalance(BigDecimal.ZERO);
         memberAccount.setCreateTime(LocalDateTime.now());
         return memberAccountMapper.insert(memberAccount);
     }
@@ -75,7 +77,7 @@ public class MemberAccountService {
      * @return 结果
      */
     public int update(MemberAccount memberAccount) {
-        return memberAccountMapper.updateById(memberAccount);
+        throw new IllegalArgumentException("请通过积分流水新增收入或支出调整积分，不可直接覆盖余额");
     }
 
     /**
@@ -85,6 +87,6 @@ public class MemberAccountService {
      * @return 结果
      */
     public int deleteByMemberId(Long memberId) {
-        return memberAccountMapper.deleteById(memberId);
+        throw new IllegalArgumentException("积分账户不可删除");
     }
 }

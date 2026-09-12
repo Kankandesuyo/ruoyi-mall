@@ -18,6 +18,8 @@ public class H5OrderVO {
     @ApiModelProperty("支付id")
     private Long payId;
 
+    private Integer payType;
+
     @ApiModelProperty("订单编号")
     private String orderSn;
 

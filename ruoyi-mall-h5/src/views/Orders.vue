@@ -23,7 +23,7 @@
               <p class="name">{{ item.productName }}</p>
               <p v-if="item.spData" class="sp">规格：{{ formatSp(item.spData) }}</p>
             </div>
-            <span class="price">￥{{ formatPrice(item.salePrice) }}</span>
+            <span class="price">{{ formatPrice(item.salePrice) }} 积分</span>
             <span class="qty">x{{ item.quantity }}</span>
           </div>
         </div>
@@ -33,12 +33,12 @@
             <span class="addr">{{ [o.receiverProvince, o.receiverCity, o.receiverDistrict, o.receiverDetailAddress].filter(Boolean).join(' ') }}</span>
           </div>
           <div class="foot-right">
-            <span class="amount">实付：<b>￥{{ formatPrice(o.payAmount) }}</b></span>
+            <span class="amount">{{ o.status === 0 ? '待付' : o.status === 4 ? '订单金额' : '实付' }}：<b>{{ formatPrice(o.payAmount) }} {{ o.payType === 3 || o.status === 0 ? '积分' : '元' }}</b></span>
             <div class="ops">
-              <el-button v-if="o.status === 0" type="primary" size="small" @click="payOrder(o)">立即付款</el-button>
-              <el-button v-if="o.status === 0" size="small" @click="cancelOrder(o)">取消订单</el-button>
-              <el-button v-if="o.status === 2" type="success" size="small" @click="completeOrder(o)">确认收货</el-button>
-              <el-button v-if="o.status === 1 || o.status === 2" size="small" @click="$router.push('/goods/' + (o.orderItemList?.[0]?.productId || ''))">再次购买</el-button>
+              <el-button v-if="o.status === 0" type="primary" size="small" :disabled="busy" @click="payOrder(o)">积分支付</el-button>
+              <el-button v-if="o.status === 0" size="small" :disabled="busy" @click="cancelOrder(o)">取消订单</el-button>
+              <el-button v-if="o.status === 2" type="success" size="small" :disabled="busy" @click="completeOrder(o)">确认收货</el-button>
+              <el-button v-if="o.status === 1 || o.status === 2" size="small" :disabled="busy" @click="$router.push('/goods/' + (o.orderItemList?.[0]?.productId || ''))">再次购买</el-button>
             </div>
           </div>
         </div>
@@ -60,19 +60,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { page as orderPage, pay as orderPay, cancel as orderCancel, complete as orderComplete } from '@/api/order'
 
+const route = useRoute()
 const activeTab = ref('all')
+const busy = ref(false)
 const orders = ref([])
 const total = ref(0)
 const page = ref(0)
 const size = 10
 const loading = ref(false)
+let requestVersion = 0
 const defaultImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="%23f5f5f5"/></svg>'
 
-onMounted(() => load())
+watch(() => route.query.status, value => {
+  activeTab.value = ['0', '1', '2', '3'].includes(value) ? value : 'all'
+  page.value = 0
+  load()
+}, { immediate: true })
 
 function onTabChange() {
   page.value = 0
@@ -84,44 +92,54 @@ function onPageChange(p) {
 }
 
 async function load() {
+  const version = ++requestVersion
   loading.value = true
   try {
     const status = activeTab.value === 'all' ? undefined : Number(activeTab.value)
     const res = await orderPage(status, page.value, size)
+    if (version !== requestVersion) return
     const data = res.data || {}
     orders.value = data.records || []
     total.value = data.total || 0
   } catch (e) {
     console.error(e)
   } finally {
-    loading.value = false
+    if (version === requestVersion) loading.value = false
   }
 }
 
 async function payOrder(o) {
+  if (busy.value) return
+  busy.value = true
   try {
-    await orderPay({ payId: o.payId, type: 2 })
-    ElMessage.success('支付请求已提交（演示环境，模拟支付成功）')
+    await ElMessageBox.confirm('将使用活动积分支付此支付单下的待付款商品，是否继续？', '积分支付')
+    const { data } = await orderPay({ payId: o.payId, type: 3 })
+    if (data?.payType !== 3) throw new Error('支付结果异常，请刷新订单确认')
+    ElMessage.success('积分支付成功，等待商家发货')
     await load()
-  } catch (e) {}
+  } catch (e) {} finally { busy.value = false }
 }
 
 async function cancelOrder(o) {
+  if (busy.value) return
+  busy.value = true
   try {
     await ElMessageBox.confirm('确定取消该订单吗？', '提示', { type: 'warning' })
     await orderCancel([o.orderId])
     ElMessage.success('订单已取消')
     await load()
-  } catch (e) {}
+  } catch (e) {} finally { busy.value = false }
 }
 
 async function completeOrder(o) {
+  if (busy.value) return
+  busy.value = true
   try {
     await ElMessageBox.confirm('确认已收到商品吗？', '提示', { type: 'warning' })
     await orderComplete(o.orderId)
     ElMessage.success('确认收货成功')
     await load()
-  } catch (e) {}
+  } catch (e) {} finally { busy.value = false }
 }
 
 function statusText(s) {
@@ -132,7 +150,11 @@ function statusTag(s) {
 }
 function formatPrice(p) { return Number(p || 0).toFixed(2) }
 function formatSp(sp) {
-  try { const arr = JSON.parse(sp); if (Array.isArray(arr)) return arr.map(i => i.value).join(' / ') } catch (e) {}
+  try {
+    const arr = JSON.parse(sp)
+    if (Array.isArray(arr)) return arr.map(i => i.value).join(' / ')
+    if (arr && typeof arr === 'object') return Object.values(arr).join(' / ')
+  } catch (e) {}
   return sp
 }
 </script>

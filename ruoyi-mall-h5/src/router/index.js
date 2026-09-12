@@ -14,6 +14,8 @@ const routes = [
       { path: 'cart', name: 'Cart', component: () => import('@/views/Cart.vue'), meta: { title: '购物车', auth: true } },
       { path: 'checkout', name: 'Checkout', component: () => import('@/views/Checkout.vue'), meta: { title: '确认订单', auth: true } },
       { path: 'orders', name: 'Orders', component: () => import('@/views/Orders.vue'), meta: { title: '我的订单', auth: true } },
+      { path: 'level', component: () => import('@/views/LevelCenter.vue'), meta: { title: '等级中心', auth: true } },
+      { path: 'points', component: () => import('@/views/Points.vue'), meta: { title: '积分活动', auth: true } },
       { path: 'profile', name: 'Profile', component: () => import('@/views/Profile.vue'), meta: { title: '个人中心', auth: true } },
       { path: 'address', name: 'Address', component: () => import('@/views/Address.vue'), meta: { title: '收货地址', auth: true } }
     ]
@@ -22,7 +24,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior: () => ({ top: 0 })
 })

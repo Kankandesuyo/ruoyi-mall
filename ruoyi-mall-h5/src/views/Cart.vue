@@ -13,7 +13,7 @@
         <span class="col-op">操作</span>
       </div>
       <div v-for="item in list" :key="item.id" class="table-row">
-        <el-checkbox :model-value="checkedIds.includes(item.id)" @change="toggleOne(item.id)" />
+        <el-checkbox :disabled="item.skuIfExist === 0 || item.status === 0" :model-value="checkedIds.includes(item.id)" @change="toggleOne(item.id)" />
         <div class="col-info">
           <img :src="item.pic || defaultImg" @error="e => e.target.src = defaultImg" />
           <div class="info-text">
@@ -22,11 +22,11 @@
             <el-tag v-if="item.skuIfExist === 0" size="small" type="info">已失效</el-tag>
           </div>
         </div>
-        <span class="col-price">￥{{ formatPrice(item.price) }}</span>
+        <span class="col-price">{{ formatPrice(item.price) }} 积分</span>
         <div class="col-qty">
-          <el-input-number v-model="item.quantity" :min="1" size="small" @change="changeQty(item)" />
+          <el-input-number v-model="item.quantity" :disabled="updating || item.skuIfExist === 0 || item.status === 0" :precision="0" :min="1" size="small" @change="changeQty(item)" />
         </div>
-        <span class="col-sub price-text">￥{{ formatPrice(item.price * item.quantity) }}</span>
+        <span class="col-sub price-text">{{ formatPrice(item.price * item.quantity) }} 积分</span>
         <span class="col-op">
           <el-button text type="danger" @click="removeItem(item)">删除</el-button>
         </span>
@@ -38,8 +38,8 @@
         </div>
         <div class="foot-right">
           <span class="total-label">合计：</span>
-          <span class="total-price">￥{{ formatPrice(totalAmount) }}</span>
-          <el-button type="primary" size="large" :disabled="!checkedIds.length" @click="goCheckout">去结算</el-button>
+          <span class="total-price">{{ formatPrice(totalAmount) }} 积分</span>
+          <el-button type="primary" size="large" :disabled="!checkedIds.length || updating" @click="goCheckout">去结算</el-button>
         </div>
       </div>
     </div>
@@ -61,8 +61,11 @@ const loading = ref(false)
 const checkedIds = ref([])
 const defaultImg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="%23f5f5f5"/></svg>'
 
+const selectable = computed(() => list.value.filter(i => i.skuIfExist !== 0 && i.status !== 0))
+const updating = ref(false)
+
 const allChecked = computed({
-  get: () => list.value.length > 0 && checkedIds.value.length === list.value.length,
+  get: () => selectable.value.length > 0 && checkedIds.value.length === selectable.value.length,
   set: () => {}
 })
 
@@ -79,6 +82,7 @@ async function load() {
   try {
     const res = await cartList()
     list.value = res.data || []
+    checkedIds.value = checkedIds.value.filter(id => selectable.value.some(i => i.id === id))
   } catch (e) {
     console.error(e)
   } finally {
@@ -87,7 +91,7 @@ async function load() {
 }
 
 function toggleAll(val) {
-  checkedIds.value = val ? list.value.map(i => i.id) : []
+  checkedIds.value = val ? selectable.value.map(i => i.id) : []
 }
 function toggleOne(id) {
   const idx = checkedIds.value.indexOf(id)
@@ -96,12 +100,14 @@ function toggleOne(id) {
 }
 
 async function changeQty(item) {
+  if (!Number.isSafeInteger(item.quantity) || item.quantity < 1) { await load(); return }
+  updating.value = true
   try {
     await cartModify({ id: item.id, quantity: item.quantity, skuId: item.skuId, productId: item.productId })
     emitChanged()
   } catch (e) {
-    load()
-  }
+    await load()
+  } finally { updating.value = false }
 }
 
 async function removeItem(item) {
@@ -118,7 +124,9 @@ async function removeItem(item) {
 }
 
 function goCheckout() {
-  const selected = list.value.filter(i => checkedIds.value.includes(i.id))
+  if (updating.value) return
+  const selected = selectable.value.filter(i => checkedIds.value.includes(i.id))
+  if (!selected.length) return
   const skuList = selected.map(i => ({ skuId: i.skuId, quantity: i.quantity }))
   sessionStorage.setItem('checkout_items', JSON.stringify(skuList))
   router.push({ path: '/checkout', query: { from: 'cart' } })
@@ -131,6 +139,7 @@ function formatSp(sp) {
   try {
     const arr = JSON.parse(sp)
     if (Array.isArray(arr)) return arr.map(i => i.value).join(' / ')
+    if (arr && typeof arr === 'object') return Object.values(arr).join(' / ')
   } catch (e) {}
   return sp
 }

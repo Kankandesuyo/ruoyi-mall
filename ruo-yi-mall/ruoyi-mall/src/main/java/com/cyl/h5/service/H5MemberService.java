@@ -82,8 +82,18 @@ public class H5MemberService {
     public RegisterVO register(RegisterForm request){
         LocalDateTime optDate = LocalDateTime.now();
         RegisterVO response = new RegisterVO();
-        //校验验证码
-        this.validateVerifyCode(request.getUuid(), request.getMobile(), request.getCode());
+        // 数字账号不代表已验证的手机号。
+        if (request == null || request.getMobile() == null || !request.getMobile().matches("[0-9]{11}")) {
+            throw new IllegalArgumentException("账号必须为11位数字");
+        }
+        if (request.getPassword() == null || request.getPassword().trim().isEmpty()
+                || request.getPassword().length() < 6 || request.getPassword().length() > 20) {
+            throw new IllegalArgumentException("密码须为6至20位，不能全为空格");
+        }
+        String encrypted = AesCryptoUtils.encrypt(aesKey, request.getMobile());
+        if (memberMapper.selectCount(new QueryWrapper<Member>().eq("phone_encrypted", encrypted)) > 0) {
+            throw new IllegalArgumentException("该账号已注册，请直接登录");
+        }
         //创建会员
         Member member = new Member();
         member.setPhoneEncrypted(AesCryptoUtils.encrypt(aesKey, request.getMobile()));
@@ -93,21 +103,15 @@ public class H5MemberService {
         member.setStatus(Constants.MEMBER_ACCOUNT_STATUS.NORMAL);
         member.setGender(0);
         member.setCreateTime(optDate);
-       int rows = memberMapper.insert(member);
-       if (rows < 1){
-           throw new RuntimeException("注册失败，请重试");
-       }
-       //调用微信授权业务拿到openId等
-        WechatUserAuth userToken = wechatAuthService.getUserToken(request.getWechatCode());
-       if (userToken == null){
-           throw new RuntimeException("授权失败，请重试");
-       }
+        int rows;
+        try {
+            rows = memberMapper.insert(member);
+        } catch (org.springframework.dao.DuplicateKeyException ex) {
+            throw new IllegalArgumentException("该账号已注册，请直接登录");
+        }
+        if (rows < 1) throw new RuntimeException("注册失败，请重试");
         MemberWechat memberWechat = new MemberWechat();
         memberWechat.setMemberId(member.getId());
-        memberWechat.setOpenid(userToken.getOpenid());
-        memberWechat.setAccessToken(userToken.getAccess_token());
-        memberWechat.setExpiresIn(userToken.getExpires_in());
-        memberWechat.setRefreshToken(userToken.getRefresh_token());
         memberWechat.setCreateTime(optDate);
         memberWechat.setCreateBy(member.getId());
         rows = memberWechatMapper.insert(memberWechat);
@@ -146,7 +150,7 @@ public class H5MemberService {
         }
         // 解码 转 对象
         H5AccountLoginForm request = JSON.parseObject(new String(Base64Utils.decodeFromString(data)), H5AccountLoginForm.class);
-        log.info("account login request:{}", JSONUtil.toJsonStr(request));
+        log.debug("Member account login requested");
         QueryWrapper<Member> qw = new QueryWrapper<>();
         qw.eq("phone_encrypted", AesCryptoUtils.encrypt(aesKey, request.getMobile()));
         Member member = memberMapper.selectOne(qw);
@@ -284,7 +288,7 @@ public class H5MemberService {
         QueryWrapper<MemberWechat> qw = new QueryWrapper<>();
         qw.eq("member_id", member.getId());
         MemberWechat memberWechat = memberWechatMapper.selectOne(qw);
-        memberVO.setOpenId(memberWechat.getOpenid());
+        memberVO.setOpenId(memberWechat == null ? null : memberWechat.getOpenid());
         return memberVO;
     }
 

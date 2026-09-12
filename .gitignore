@@ -1,0 +1,13 @@
+.runtime/
+.playwright-cli/
+output/
+report/
+node_modules/
+dist/
+target/
+*.log
+.env.local
+.env.*.local
+*.pem
+*.p12
+*.pfx

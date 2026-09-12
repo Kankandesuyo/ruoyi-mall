@@ -9,10 +9,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.cyl.h5.config.SecurityUtil;
-import com.cyl.manager.act.domain.entity.IntegralHistory;
 import com.cyl.manager.act.domain.entity.MemberCoupon;
 import com.cyl.manager.act.domain.vo.CouponActivityVO;
-import com.cyl.manager.act.mapper.IntegralHistoryMapper;
 import com.cyl.manager.act.mapper.MemberCouponMapper;
 import com.cyl.manager.pms.domain.entity.Product;
 import com.cyl.manager.pms.mapper.ProductMapper;
@@ -40,6 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class CouponActivityService {
     @Autowired
+    private IntegralHistoryService integralHistoryService;
+    @Autowired
     private CouponActivityMapper couponActivityMapper;
     @Autowired
     private MemberCouponMapper memberCouponMapper;
@@ -47,8 +47,6 @@ public class CouponActivityService {
     private ProductMapper productMapper;
     @Autowired
     private MemberAccountMapper memberAccountMapper;
-    @Autowired
-    private IntegralHistoryMapper integralHistoryMapper;
 
     /**
      * 查询优惠券活动表
@@ -235,16 +233,7 @@ public class CouponActivityService {
         }
         //如果是积分兑换
         if (Objects.equals(2, couponActivity.getCouponType())) {
-            //判断积分是否够
-            MemberAccount memberAccount = memberAccountMapper.selectById(memberId);
-            if (memberAccount.getIntegralBalance().compareTo(couponActivity.getUseIntegral()) < 0) {
-                throw new RuntimeException("您的积分不足");
-            }
-
-            //扣除积分
-            memberAccountMapper.updateIntegral(couponActivity.getUseIntegral(), memberId);
-            //记录日志
-            insertIntegralHistory(couponActivity.getUseIntegral(), couponActivity.getCouponAmount(), memberId);
+            integralHistoryService.consumePoints(memberId, couponActivity.getUseIntegral(), "COUPON", 24, null);
         }
 
         //兑换券
@@ -271,14 +260,4 @@ public class CouponActivityService {
         return memberCouponMapper.insert(memberCoupon);
     }
 
-    private void insertIntegralHistory(BigDecimal amount, BigDecimal couponAmount, Long memberId) {
-        IntegralHistory history = new IntegralHistory();
-        history.setOpType(2);
-        history.setSubOpType(22);
-        history.setAmount(amount);
-        history.setOrderAmount(couponAmount);
-        history.setMemberId(memberId);
-        history.setCreateTime(LocalDateTime.now());
-        integralHistoryMapper.insert(history);
-    }
 }

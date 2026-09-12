@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { addressPayload } from '@/utils/contract'
 
 // 地址列表
 export function list() {
@@ -21,7 +22,7 @@ export function create(data) {
   return request({
     url: '/h5/member/address/create',
     method: 'post',
-    data
+    data: addressPayload(data)
   })
 }
 
@@ -30,7 +31,7 @@ export function update(data) {
   return request({
     url: '/h5/member/address/update',
     method: 'put',
-    data
+    data: addressPayload(data)
   })
 }
 

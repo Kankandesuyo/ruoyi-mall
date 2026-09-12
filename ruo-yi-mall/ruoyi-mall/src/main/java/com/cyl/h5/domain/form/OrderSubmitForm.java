@@ -12,8 +12,8 @@ public class OrderSubmitForm {
     @NotNull
     private Long addressId;
     private String note;
-    /** 支付方式 0：未支付 1：支付宝 2：微信  默认微信 */
-    private Integer payType = 2;
+    /** 支付方式 3：积分支付 */
+    private Integer payType = 3;
     /** 订单来源，购物车则为cart */
     private String from;
     private Long memberCouponId;

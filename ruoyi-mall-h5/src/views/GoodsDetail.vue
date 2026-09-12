@@ -22,7 +22,7 @@
           <h1 class="title">{{ product.name }}</h1>
           <div class="price-box">
             <span class="label">价格</span>
-            <span class="price">￥{{ formatPrice(product.price) }}</span>
+            <span class="price">{{ formatPrice(currentSku?.price ?? product.price) }} 积分</span>
           </div>
           <ul class="meta">
             <li v-if="product.brandName">品牌：{{ product.brandName }}</li>
@@ -52,11 +52,12 @@
           </div>
           <!-- 操作 -->
           <div class="actions">
-            <el-button type="warning" size="large" :icon="ShoppingCart" @click="addToCart">加入购物车</el-button>
-            <el-button type="danger" size="large" @click="buyNow">立即购买</el-button>
+            <el-button type="warning" size="large" :icon="ShoppingCart" :loading="adding" :disabled="!available" @click="addToCart">加入购物车</el-button>
+            <el-button type="danger" size="large" :disabled="!available" @click="buyNow">立即购买</el-button>
           </div>
         </div>
       </div>
+      <ProductComments :key="product.id" :product-id="product.id" />
       <!-- 富文本详情 -->
       <div class="detail-html">
         <div class="html-title">商品详情</div>
@@ -74,12 +75,15 @@ import { ShoppingCart } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { detail as productDetail } from '@/api/product'
 import { add as cartAdd } from '@/api/cart'
+import ProductComments from '@/components/ProductComments.vue'
+import DOMPurify from 'dompurify'
 import { getToken } from '@/utils/auth'
 
 const route = useRoute()
 const router = useRouter()
 
 const loading = ref(false)
+let requestVersion = 0
 const product = ref(null)
 const skus = ref([])
 const selectedSkuId = ref(null)
@@ -100,29 +104,33 @@ const album = computed(() => {
 })
 
 const currentSku = computed(() => skus.value.find(s => s.id === selectedSkuId.value))
-const maxQty = computed(() => currentSku.value?.stock || 1)
+const maxQty = computed(() => Math.max(1, Number(currentSku.value?.stock) || 0))
+const available = computed(() => !!product.value && !!currentSku.value && Number(currentSku.value.stock) > 0)
+const adding = ref(false)
 
-watch(currentPic, () => {})
+watch(selectedSkuId, () => { quantity.value = 1 })
 watch(() => route.params.id, (id) => { if (id) load() })
 
 onMounted(() => load())
 
 async function load() {
+  const version = ++requestVersion
   const id = route.params.id
   if (!id) return
   loading.value = true
   try {
     const res = await productDetail(id)
+    if (version !== requestVersion) return
     const data = res.data || {}
-    product.value = data.product
+    product.value = data.product?.publishStatus === 0 ? null : data.product
     skus.value = data.skus || []
-    detailHtml.value = data.product?.detailMobileHtml || ''
+    detailHtml.value = DOMPurify.sanitize(data.product?.detailMobileHtml || data.product?.detailHtml || '')
     currentPic.value = album.value[0] || ''
-    if (skus.value.length) selectedSkuId.value = skus.value[0].id
+    selectedSkuId.value = skus.value.find(s => Number(s.stock) > 0)?.id ?? null
   } catch (e) {
     console.error(e)
   } finally {
-    loading.value = false
+    if (version === requestVersion) loading.value = false
   }
 }
 
@@ -136,6 +144,7 @@ function skuLabel(s) {
     try {
       const arr = JSON.parse(s.spData)
       if (Array.isArray(arr)) return arr.map(i => i.value).join(' / ')
+      if (arr && typeof arr === 'object') return Object.values(arr).join(' / ')
     } catch (e) {}
   }
   return '默认规格'
@@ -145,13 +154,14 @@ function onImgError(e) { e.target.src = defaultImg }
 function onThumbError(e, i) { e.target.src = defaultImg }
 
 async function addToCart() {
+  if (adding.value) return
   if (!getToken()) {
     ElMessage.warning('请先登录')
     router.push({ path: '/login', query: { redirect: route.fullPath } })
     return
   }
-  if (skus.value.length && !selectedSkuId.value) {
-    ElMessage.warning('请选择规格')
+  if (!available.value || !Number.isSafeInteger(quantity.value) || quantity.value < 1 || quantity.value > maxQty.value) {
+    ElMessage.warning('请选择有库存的规格和有效数量')
     return
   }
   const sku = currentSku.value || {}
@@ -164,12 +174,13 @@ async function addToCart() {
     spData: sku.spData || ''
   }
   try {
+    adding.value = true
     await cartAdd(payload)
     ElMessage.success('已加入购物车')
     emitCartChanged()
   } catch (e) {
     // 错误已在拦截器提示
-  }
+  } finally { adding.value = false }
 }
 
 function buyNow() {
@@ -178,8 +189,8 @@ function buyNow() {
     router.push({ path: '/login', query: { redirect: route.fullPath } })
     return
   }
-  if (skus.value.length && !selectedSkuId.value) {
-    ElMessage.warning('请选择规格')
+  if (!available.value || !Number.isSafeInteger(quantity.value) || quantity.value < 1 || quantity.value > maxQty.value) {
+    ElMessage.warning('请选择有库存的规格和有效数量')
     return
   }
   const sku = currentSku.value || skus.value[0] || {}

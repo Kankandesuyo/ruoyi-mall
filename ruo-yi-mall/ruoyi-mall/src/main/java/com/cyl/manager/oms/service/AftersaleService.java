@@ -244,7 +244,7 @@ public class AftersaleService {
      */
     @Transactional(rollbackFor = Exception.class)
     public void dealWith(DealWithAftersaleForm request, Long userId, String optUserName) {
-        Order order = orderMapper.selectById(request.getOrderId());
+        Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", request.getOrderId()).last("FOR UPDATE"));
         if (order == null) {
             throw new RuntimeException("无该订单");
         }
@@ -332,7 +332,35 @@ public class AftersaleService {
         }
     }
 
+    @Autowired
+    private com.cyl.manager.act.service.IntegralHistoryService integralHistoryService;
+
+    @Transactional(rollbackFor = Exception.class)
     public void tradeRefund(Aftersale returnApply, Order order, LocalDateTime optDate, Long userId) {
+        if (Integer.valueOf(3).equals(order.getPayType())) {
+            Order locked = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", order.getId()).last("FOR UPDATE"));
+            if (OrderRefundStatus.SUCCESS.getType().equals(locked.getAftersaleStatus())) return;
+            if (returnApply.getReturnAmount() == null || returnApply.getReturnAmount().signum() <= 0
+                    || returnApply.getReturnAmount().compareTo(locked.getPayAmount()) != 0)
+                throw new RuntimeException("积分订单仅支持按实付积分全额退还");
+            integralHistoryService.refundPoints(locked.getMemberId(), locked.getId(), returnApply.getReturnAmount());
+            orderMapper.update(null, new UpdateWrapper<Order>().eq("id", locked.getId())
+                .set("aftersale_status", OrderRefundStatus.SUCCESS.getType()).set("status", 4).set("update_time", optDate));
+            aftersaleMapper.update(null, new UpdateWrapper<Aftersale>().eq("id", returnApply.getId())
+                .set("status", AftersaleStatus.SUCCESS.getType()));
+            for (OrderItem item : orderItemMapper.selectList(new QueryWrapper<OrderItem>().eq("order_id", locked.getId())))
+                skuMapper.updateStockById(item.getSkuId(), optDate, -item.getQuantity());
+            if (locked.getMemberCouponId() != null) memberCouponService.backCoupon(Arrays.asList(locked.getMemberCouponId()));
+            OrderOperateHistory operation = new OrderOperateHistory();
+            operation.setOrderId(locked.getId());
+            operation.setOperateMan("积分退款");
+            operation.setOrderStatus(13);
+            operation.setCreateTime(optDate);
+            operation.setCreateBy(userId);
+            operateHistoryMapper.insert(operation);
+            return;
+        }
+
         //查一下微信订单
         QueryWrapper<WechatPaymentHistory> qw = new QueryWrapper<>();
         qw.eq("order_id", order.getPayId()).eq("op_type", 1);

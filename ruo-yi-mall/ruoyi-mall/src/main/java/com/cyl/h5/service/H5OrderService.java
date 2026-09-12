@@ -134,12 +134,12 @@ public class H5OrderService {
             throw new RuntimeException("收获地址不能为空");
         }
         MemberAddress memberAddress = memberAddressMapper.selectById(addressId);
-        if (memberAddress == null) {
+        if (memberAddress == null || !member.getId().equals(memberAddress.getMemberId())) {
             throw new RuntimeException("收货地址不能为空");
         }
         //sku不能为空
         List<OrderProductListDTO> skuList = form.getSkuList();
-        if (CollectionUtil.isEmpty(skuList)) {
+        if (CollectionUtil.isEmpty(skuList) || skuList.stream().anyMatch(it -> it == null || it.getSkuId() == null || it.getQuantity() == null || it.getQuantity() <= 0)) {
             throw new RuntimeException("商品SKU信息不能为空");
         }
         //将sku信息转换为 key：skuId ，value：购买数量
@@ -213,7 +213,7 @@ public class H5OrderService {
         order.setOrderSn(this.getOrderIdPrefix() + orderId);
         order.setMemberId(member.getId());
         order.setMemberUsername(member.getNickname());
-        order.setPayType(Constants.PayType.WECHAT);
+        order.setPayType(Constants.PayType.POINTS);
         order.setCouponAmount(couponAmount);
         order.setMemberCouponId(form.getMemberCouponId());
         order.setTotalAmount(orderTotalAmount);
@@ -289,7 +289,7 @@ public class H5OrderService {
         OrderCalcVO res = new OrderCalcVO();
         List<SkuViewVO> skuList = new ArrayList<>();
         List<OrderProductListDTO> list = orderCreateForm.getSkuList();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollectionUtil.isEmpty(list) || list.stream().anyMatch(it -> it == null || it.getSkuId() == null || it.getQuantity() == null || it.getQuantity() <= 0)) {
             throw new RuntimeException("商品SKU信息不能为空");
         }
         //将购买的sku信息转化为key：skuId value：数量
@@ -371,11 +371,7 @@ public class H5OrderService {
      * @return 结果
      */
     public PageImpl<H5OrderVO> orderPage(Integer status, Long memberId, Pageable pageable) {
-        // 如果全部且页数为1，看看有无待付款单
         List<H5OrderVO> unpaidOrderList = new ArrayList<>();
-        if (Constants.H5OrderStatus.ALL.equals(status) && pageable.getPageNumber() == 0) {
-            unpaidOrderList = orderMapper.orderPage(Constants.H5OrderStatus.UN_PAY, memberId);
-        }
         if (pageable != null) {
             PageHelper.startPage(pageable.getPageNumber() + 1, pageable.getPageSize());
         }
@@ -504,6 +500,8 @@ public class H5OrderService {
         }
         QueryWrapper<Order> orderQw = new QueryWrapper<>();
         orderQw.in("id", request.getIdList());
+        if (userId != null) orderQw.eq("member_id", userId);
+        orderQw.orderByAsc("id").last("FOR UPDATE");
         List<Order> orderList = orderMapper.selectList(orderQw);
         if (orderList.size() < request.getIdList().size()) {
             throw new RuntimeException("未查询到订单信息");
@@ -566,97 +564,34 @@ public class H5OrderService {
      * @param req 支付请求
      * @return
      */
+    @Transactional(rollbackFor = Exception.class)
     public OrderPayVO orderPay(OrderPayForm req) {
-        QueryWrapper<Order> qw = new QueryWrapper<>();
-        qw.eq("pay_id", req.getPayId());
-        qw.eq("status", 0);
-        List<Order> orderList = orderMapper.selectList(qw);
-        if (CollectionUtil.isEmpty(orderList)) {
-            throw new RuntimeException("没有待支付的订单");
+        Long memberId = SecurityUtil.getLocalMember().getId();
+        if (req.getPayId() == null) throw new RuntimeException("支付编号不能为空");
+        List<Order> orders = orderMapper.selectList(new QueryWrapper<Order>()
+            .eq("pay_id", req.getPayId()).eq("member_id", memberId).orderByAsc("id").last("FOR UPDATE"));
+        if (orders.isEmpty()) throw new RuntimeException("订单不存在");
+        for (Order order : orders) {
+            if (!Integer.valueOf(0).equals(order.getStatus())) throw new RuntimeException("订单已支付或已关闭，请刷新订单");
         }
-        QueryWrapper<MemberWechat> memberWechatQw = new QueryWrapper<>();
-        memberWechatQw.eq("member_id", req.getMemberId());
-        MemberWechat memberWechat = memberWechatMapper.selectOne(memberWechatQw);
-        if (memberWechat == null) {
-            throw new RuntimeException("获取用户openId失败");
+        for (Order order : orders) {
+            integralHistoryService.payWithPoints(memberId, order.getId(), order.getPayAmount());
+            int changed = orderMapper.update(null, new UpdateWrapper<Order>()
+                .eq("id", order.getId()).eq("status", 0).eq("member_id", memberId)
+                .set("status", OrderStatus.NOT_DELIVERED.getType()).set("pay_type", Constants.PayType.POINTS)
+                .set("payment_time", LocalDateTime.now()).set("update_time", LocalDateTime.now()));
+            if (changed != 1) throw new RuntimeException("订单状态已变化，请刷新");
+            OrderOperateHistory history = new OrderOperateHistory();
+            history.setOrderId(order.getId());
+            history.setOrderSn(order.getOrderSn());
+            history.setOperateMan(String.valueOf(memberId));
+            history.setOrderStatus(OrderStatus.NOT_DELIVERED.getType());
+            history.setCreateTime(LocalDateTime.now());
+            history.setCreateBy(memberId);
+            if (orderOperateHistoryMapper.insert(history) != 1) throw new RuntimeException("订单流水保存失败");
         }
-        String openId = null;
-        String appId = null;
-        //公众号支付流程
-        if (req.getWechatType() == 1) {
-            if (StrUtil.isBlank(memberWechat.getOpenid())) {
-                throw new RuntimeException("获取用户openId失败");
-            }
-            openId = memberWechat.getOpenid();
-            appId = WechatPayData.appId;
-        }
-        //小程序支付流程
-        if (req.getWechatType() == 2) {
-            if (StrUtil.isBlank(memberWechat.getRoutineOpenid())) {
-                throw new RuntimeException("获取用户openId失败");
-            }
-            openId = memberWechat.getRoutineOpenid();
-            appId = WechatPayData.miniProgramAppId;
-        }
-        QueryWrapper<OrderItem> orderItemQw = new QueryWrapper<>();
-        orderItemQw.eq("order_id", orderList.get(0).getId());
-        List<OrderItem> orderItemList = orderItemMapper.selectList(orderItemQw);
-        String orderDesc = orderItemList.get(0).getProductName().substring(0, Math.min(40, orderItemList.get(0).getProductName().length()));
-        //保存微信支付历史
-        LocalDateTime optDate = LocalDateTime.now();
-        QueryWrapper<WechatPaymentHistory> wxPaymentQw = new QueryWrapper<>();
-        wxPaymentQw.eq("order_id", orderList.get(0).getPayId());
-        wxPaymentQw.eq("op_type", Constants.PaymentOpType.PAY);
-        WechatPaymentHistory wechatPaymentHistory = wechatPaymentHistoryMapper.selectOne(wxPaymentQw);
-        if (wechatPaymentHistory == null) {
-            wechatPaymentHistory = new WechatPaymentHistory();
-            wechatPaymentHistory.setOrderId(orderList.get(0).getPayId());
-            wechatPaymentHistory.setMemberId(req.getMemberId());
-            wechatPaymentHistory.setOpenid(memberWechat.getOpenid());
-            wechatPaymentHistory.setTitle(orderItemList.get(0).getProductName());
-            wechatPaymentHistory.setMoney(orderList.get(0).getPayAmount());
-            wechatPaymentHistory.setOpType(Constants.PaymentOpType.PAY);
-            wechatPaymentHistory.setPaymentStatus(0);
-            wechatPaymentHistory.setCreateBy(req.getMemberId());
-            wechatPaymentHistory.setCreateTime(optDate);
-            wechatPaymentHistory.setUpdateBy(req.getMemberId());
-            wechatPaymentHistory.setUpdateTime(optDate);
-            wechatPaymentHistoryMapper.insert(wechatPaymentHistory);
-        } else {
-            wechatPaymentHistory.setMoney(orderList.get(0).getPayAmount());
-            wechatPaymentHistoryMapper.updateById(wechatPaymentHistory);
-        }
-        //请开启微信支付 wechat.enabled=true
-        //调用wx的jsapi拿prepayId，返回签名等信息
-        String prepayId = wechatPayService.jsapiPay(
-                String.valueOf(req.getPayId()),
-                orderDesc,
-                Integer.valueOf(orderList.stream().map(Order::getPayAmount).
-                        reduce(BigDecimal.ZERO, BigDecimal::add).multiply(new BigDecimal(100)).stripTrailingZeros().toPlainString()),
-                openId,
-                req.getMemberId(),
-                appId
-        );
         OrderPayVO response = new OrderPayVO();
-        response.setPayType(2);
-        String nonceStr = WechatPayUtil.generateNonceStr();
-        long timeStamp = WechatPayUtil.getCurrentTimestamp();
-        prepayId = "prepay_id=" + prepayId;
-        String signType = "RSA";
-        String paySign = null;
-        String signatureStr = Stream.of(appId, String.valueOf(timeStamp), nonceStr, prepayId)
-                .collect(Collectors.joining("\n", "", "\n"));
-        try {
-            paySign = WechatPayUtil.getSign(signatureStr, WechatPayData.privateKeyPath);
-        } catch (Exception e) {
-            throw new RuntimeException("支付失败");
-        }
-        response.setAppId(appId);
-        response.setTimeStamp(String.valueOf(timeStamp));
-        response.setNonceStr(nonceStr);
-        response.setSignType(signType);
-        response.setPackage_(prepayId);
-        response.setPaySign(paySign);
+        response.setPayType(Constants.PayType.POINTS);
         return response;
     }
 
@@ -735,7 +670,8 @@ public class H5OrderService {
      */
     @Transactional
     public Order applyRefund(ApplyRefundForm applyRefundForm) {
-        Order order = orderMapper.selectById(applyRefundForm.getOrderId());
+        Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", applyRefundForm.getOrderId())
+            .eq("member_id", SecurityUtil.getLocalMember().getId()).last("FOR UPDATE"));
         //是否符合售后条件
         this.checkIfCanApplyRefund(order);
         LocalDateTime optDate = LocalDateTime.now();

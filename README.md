@@ -1,4 +1,19 @@
-# sf111
+# 若依积分商城
+
+本仓库统一保存后端、管理端和 H5 用户端源码，基于 https://github.com/chenge26696/fw111 的项目继续开发。
+
+| 目录 | 用途 |
+| --- | --- |
+| `ruo-yi-mall/` | Java / Spring Boot 后端、数据库结构及迁移脚本 |
+| `ruoyi-mall-vue/` | Vue 管理端，管理商品、订单和积分规则 |
+| `ruoyi-mall-h5/` | Vue 3 用户端，提供购物、会员、签到和积分支付页面 |
+| `scripts/` | Windows 本地启动与演示商品初始化脚本 |
+
+本地脚本包含本机软件路径，其他电脑使用前需要调整 Java、MySQL、Redis 路径，并准备本地数据库与配置。`.runtime/` 中的数据库、密码、上传文件及日志不随源码提交。仓库中的默认配置仅用于开发示例，部署前需替换数据库密码和令牌密钥，并核查登录、权限及外部服务配置。
+
+验证命令：H5 目录执行 `npm test` 和 `npm run build`；管理端目录执行 `npm run build:prod`，旧版 Webpack 在新版 Node.js 下需要 `NODE_OPTIONS=--openssl-legacy-provider`。
+
+以下保留原项目说明。
 
 #### 介绍
 作业

@@ -22,6 +22,11 @@ public class IntegralHistory {
 
     @ApiModelProperty("ID")
     private Long id;
+    private BigDecimal beforePoints;
+    private BigDecimal afterPoints;
+    private String source;
+    private Long signInVersion;
+    private String description;
 
     @ApiModelProperty("MEMBER_ID")
     @Excel(name = "MEMBER_ID")

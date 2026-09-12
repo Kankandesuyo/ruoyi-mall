@@ -105,6 +105,7 @@ public class MemberService {
      * @return 结果
      */
     public int insert(Member member) {
+        member.setLevel(1);
         member.setCreateTime(LocalDateTime.now());
         return memberMapper.insert(member);
     }
@@ -116,6 +117,9 @@ public class MemberService {
      * @return 结果
      */
     public int update(Member member) {
+        // Level changes are exclusively handled by the transactional upgrade service.
+        member.setLevel(null);
+        member.setIntegral(null);
         return memberMapper.updateById(member);
     }
 

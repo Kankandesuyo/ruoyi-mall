@@ -52,15 +52,13 @@ public class H5IntegralHistoryController extends BaseController {
     @ApiOperation("新增积分流水表")
     @Log(title = "积分流水表", businessType = BusinessType.INSERT)
     @PostMapping("/add")
-    public ResponseEntity<Integer> add(BigDecimal amount) {
+    public ResponseEntity<Integer> add() {
+        return ResponseEntity.ok(service.signIn());
+    }
 
-        IntegralHistory history = new IntegralHistory();
-        history.setOpType(1);
-        history.setSubOpType(11);
-        history.setAmount(amount);
-        history.setMemberId(SecurityUtil.getLocalMember().getId());
-        history.setCreateTime(LocalDateTime.now());
-        return ResponseEntity.ok(service.insert2(history));
+    @GetMapping("/activity")
+    public ResponseEntity<java.util.Map<String, Object>> activity() {
+        return ResponseEntity.ok(service.activity());
     }
 
     @ApiOperation("积分流水")

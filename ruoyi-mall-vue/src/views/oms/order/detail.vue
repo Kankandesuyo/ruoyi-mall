@@ -53,7 +53,7 @@
                     <el-table-column label="购买数量" prop="buyNum"></el-table-column>
                     <el-table-column label="实付金额" prop="payAmount">
                         <template slot-scope="scope">
-                            <span>￥{{ orderDetail.payAmount }}</span>
+                            <span>{{ orderDetail.payAmount }} {{ orderDetail.payType === 3 ? '积分' : '元' }}</span>
                         </template>
                     </el-table-column>
                 </el-table>
@@ -147,7 +147,7 @@ export default {
             return this.orderStatusMap.get(row.orderStatus + '')
         },
         getPayType(row) {
-            return this.payTypeMap.get(row.payType + '')
+            return Number(row.payType) === 3 ? '积分支付' : this.payTypeMap.get(row.payType + '')
         },
         // getExpressName(row) {
         //     return this.expressMap.get(row.expressName + '')

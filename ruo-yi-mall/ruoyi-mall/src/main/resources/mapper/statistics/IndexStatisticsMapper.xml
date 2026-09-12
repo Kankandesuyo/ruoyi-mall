@@ -53,9 +53,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="spData" column="sp_data"/>
     </resultMap>
      <select id="goodsStatistics" parameterType="com.cyl.manager.statistics.domain.query.GoodsStatisticsQuery" resultMap="topSalesResultMap">
-        SELECT product_id ,
-               product_name,
-               pic,
+        SELECT MAX(product_id) AS product_id,
+               MAX(product_name) AS product_name,
+               MAX(pic) AS pic,
                IFNULL(SUM(quantity), 0) as total_sales
         FROM oms_order_item item right join oms_order o on o.id=item.order_id
         WHERE DATE(item.create_time) between DATE(#{startDate}) AND DATE(#{endDate}) AND o.status in(1,2,3)
@@ -90,10 +90,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by a.date asc
     </select>
     <select id="goodsSkuStatistics" resultMap="topSalesResultMap">
-        SELECT product_id ,
-               product_name,
-               pic,
-               sp_data,
+        SELECT MAX(product_id) AS product_id,
+               MAX(product_name) AS product_name,
+               MAX(pic) AS pic,
+               MAX(sp_data) AS sp_data,
                IFNULL(SUM(quantity), 0) as total_sales
         FROM oms_order_item item right join oms_order o on o.id=item.order_id
         WHERE DATE(item.create_time) between DATE(#{startDate}) AND DATE(#{endDate}) AND o.status in(1,2,3)
