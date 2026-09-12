@@ -140,6 +140,17 @@ public class H5MemberService {
     }
 
     /**
+     * 解析登录报文，兼容两种格式：明文 JSON 对象与历史客户端的 Base64 编码串
+     */
+    public static <T> T parseLoginBody(String data, Class<T> clazz) {
+        String body = data == null ? "" : data.trim();
+        if (body.startsWith("{")) {
+            return JSON.parseObject(body, clazz);
+        }
+        return JSON.parseObject(new String(Base64Utils.decodeFromString(body)), clazz);
+    }
+
+    /**
      * 账号密码登录
      * @param data
      * @return
@@ -149,7 +160,7 @@ public class H5MemberService {
             throw new RuntimeException(Constants.LOGIN_INFO.WRONG);
         }
         // 解码 转 对象
-        H5AccountLoginForm request = JSON.parseObject(new String(Base64Utils.decodeFromString(data)), H5AccountLoginForm.class);
+        H5AccountLoginForm request = parseLoginBody(data, H5AccountLoginForm.class);
         log.debug("Member account login requested");
         QueryWrapper<Member> qw = new QueryWrapper<>();
         qw.eq("phone_encrypted", AesCryptoUtils.encrypt(aesKey, request.getMobile()));
@@ -170,7 +181,7 @@ public class H5MemberService {
         if (StringUtils.isEmpty(data)){
             throw new RuntimeException(Constants.LOGIN_INFO.WRONG);
         }
-        H5SmsLoginForm request = JSON.parseObject(new String(Base64Utils.decodeFromString(data)), H5SmsLoginForm.class);
+        H5SmsLoginForm request = parseLoginBody(data, H5SmsLoginForm.class);
         //校验验证码
         this.validateVerifyCode(request.getUuid(), request.getMobile(), request.getCode());
         //查会员

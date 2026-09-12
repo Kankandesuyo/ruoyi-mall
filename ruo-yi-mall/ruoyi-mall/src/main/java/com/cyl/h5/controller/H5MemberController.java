@@ -1,6 +1,5 @@
 package com.cyl.h5.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.cyl.h5.domain.form.RegisterForm;
 import com.cyl.h5.domain.vo.H5LoginVO;
 import com.cyl.h5.domain.vo.RegisterVO;
@@ -14,7 +13,6 @@ import com.ruoyi.framework.web.service.TokenService;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,7 +66,7 @@ public class H5MemberController {
         if (StringUtils.isEmpty(data)) {
             return ResponseEntity.ok(null);
         }
-        WechatLoginVO params = JSON.parseObject(new String(Base64Utils.decodeFromString(data)), WechatLoginVO.class);
+        WechatLoginVO params = H5MemberService.parseLoginBody(data, WechatLoginVO.class);
         return ResponseEntity.ok(service.wechatLogin(params));
     }
 

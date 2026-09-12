@@ -117,8 +117,8 @@ public class OrderController extends BaseController {
             redisService.lock(redisKey, redisValue, 60);
             return ResponseEntity.ok(service.deliverProduct(request, userId));
         }catch (Exception e){
-            log.error("订单发货接口异常");
-            throw new RuntimeException("发货失败");
+            log.error("订单发货接口异常", e);
+            throw new RuntimeException("发货失败：" + e.getMessage());
         }finally {
             try{
                 redisService.unLock(redisKey, redisValue);;

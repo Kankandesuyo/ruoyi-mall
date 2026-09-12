@@ -7,6 +7,7 @@ import com.cyl.manager.ums.mapper.MemberAddressMapper;
 import com.cyl.manager.ums.domain.form.MemberAddressForm;
 import com.cyl.manager.ums.domain.vo.MemberAddressVO;
 import com.ruoyi.common.constant.Constants;
+import com.ruoyi.common.exception.base.BaseException;
 import com.ruoyi.common.utils.AesCryptoUtils;
 import com.ruoyi.common.utils.PhoneUtils;
 import com.ruoyi.framework.config.LocalDataUtil;
@@ -72,7 +73,7 @@ public class H5MemberAddressService {
      */
     public int insert(MemberAddressForm memberAddressForm) {
         Member member = (Member) LocalDataUtil.getVar(Constants.MEMBER_INFO);
-        if (memberAddressForm.getIsDefault() == 1) {
+        if (Integer.valueOf(1).equals(memberAddressForm.getIsDefault())) {
             //将别的设置为0
             memberAddressMapper.updateDefault(0,member.getId());
         }
@@ -94,17 +95,35 @@ public class H5MemberAddressService {
    
     public int update(MemberAddressForm memberAddressForm) {
         Member member = (Member) LocalDataUtil.getVar(Constants.MEMBER_INFO);
-        if (memberAddressForm.getIsDefault() == 1) {
+        if (memberAddressForm.getId() == null) {
+            throw new BaseException("地址不存在");
+        }
+        // update-strategy: ignored 会把实体中未赋值的字段一并写库，直接用表单构建实体
+        // 更新会把 member_id、create_time 等字段刷成 NULL，必须查出原记录在其上修改
+        MemberAddress dbAddress = memberAddressMapper.selectById(memberAddressForm.getId());
+        if (dbAddress == null) {
+            throw new BaseException("地址不存在");
+        }
+        if (!member.getId().equals(dbAddress.getMemberId())) {
+            throw new BaseException("无权操作该地址");
+        }
+        if (Integer.valueOf(1).equals(memberAddressForm.getIsDefault())) {
             //将别的设置为0
             memberAddressMapper.updateDefault(0,member.getId());
         }
-        MemberAddress memberAddress = new MemberAddress();
-        BeanUtils.copyProperties(memberAddressForm, memberAddress);
-        memberAddress.setPhoneHidden(PhoneUtils.hidePhone(memberAddressForm.getPhone()));
-        memberAddress.setPhoneEncrypted(AesCryptoUtils.encrypt(aesKey, memberAddressForm.getPhone()));
-        memberAddress.setUpdateTime(LocalDateTime.now());
-        memberAddress.setUpdateBy(member.getId());
-        return memberAddressMapper.updateById(memberAddress);
+        BeanUtils.copyProperties(memberAddressForm, dbAddress, "memberId", "isDefault", "defaultStatus");
+        if (memberAddressForm.getIsDefault() != null) {
+            dbAddress.setIsDefault(memberAddressForm.getIsDefault());
+        }
+        if (memberAddressForm.getDefaultStatus() != null) {
+            dbAddress.setDefaultStatus(memberAddressForm.getDefaultStatus());
+        }
+        dbAddress.setMemberId(member.getId());
+        dbAddress.setPhoneHidden(PhoneUtils.hidePhone(memberAddressForm.getPhone()));
+        dbAddress.setPhoneEncrypted(AesCryptoUtils.encrypt(aesKey, memberAddressForm.getPhone()));
+        dbAddress.setUpdateTime(LocalDateTime.now());
+        dbAddress.setUpdateBy(member.getId());
+        return memberAddressMapper.updateById(dbAddress);
     }
 
     /**
