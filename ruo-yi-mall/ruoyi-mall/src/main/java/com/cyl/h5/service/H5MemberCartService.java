@@ -17,7 +17,6 @@ import com.cyl.manager.ums.domain.form.UpdateMemberCartForm;
 import com.github.pagehelper.PageHelper;
 import com.ruoyi.common.constant.Constants;
 import com.ruoyi.common.exception.base.BaseException;
-import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.common.utils.SortUtil;
 import com.ruoyi.framework.config.LocalDataUtil;
 import org.springframework.beans.BeanUtils;
@@ -144,7 +143,7 @@ public class H5MemberCartService {
         if (form.getNum() == null || form.getId() == null) {
             throw new BaseException("参数错误");
         }
-        Long userId = SecurityUtils.getUserId();
+        Long userId = SecurityUtil.getLocalMember().getId();
         LambdaQueryWrapper<MemberCart> qw = new LambdaQueryWrapper<>();
         qw.eq(MemberCart::getMemberId, userId);
         qw.eq(MemberCart::getId, form.getId());
@@ -178,9 +177,8 @@ public class H5MemberCartService {
     }
 
     public Integer mineCartNum() {
-        Long userId = SecurityUtils.getUserId();
         QueryWrapper<MemberCart> qw = new QueryWrapper<>();
-        qw.eq("member_id", userId);
+        qw.eq("member_id", SecurityUtil.getLocalMember().getId());
         qw.eq("status", 1);
         qw.select("count(quantity) quantity");
         MemberCart c = memberCartMapper.selectOne(qw);
@@ -192,7 +190,7 @@ public class H5MemberCartService {
 
     public List<Long> mineCartIds() {
         QueryWrapper<MemberCart> qw = new QueryWrapper<>();
-        qw.eq("member_id", SecurityUtils.getUserId());
+        qw.eq("member_id", SecurityUtil.getLocalMember().getId());
         qw.eq("status", 1);
         qw.select("id");
         List<MemberCart> list = memberCartMapper.selectList(qw);

@@ -1,0 +1,877 @@
+[
+  {
+    "module": "1.公开接口",
+    "name": "管理端验证码图",
+    "pass": "c0d02c8e27fd462ca7a1654e909275be",
+    "detail": "uuid=c0d02c8e27fd462ca7a1654e909275be"
+  },
+  {
+    "module": "1.公开接口",
+    "name": "H5首页配置",
+    "pass": true,
+    "detail": "{\"banners\":\"[{\\\"id\\\":1,\\\"linkUrl\\\":\\\"/pages/goods/goods?id=1"
+  },
+  {
+    "module": "1.公开接口",
+    "name": "H5商品计数",
+    "pass": true,
+    "detail": "{\"banners\":\"[{\\\"id\\\":1,\\\"linkUrl\\\":\\\"/pa"
+  },
+  {
+    "module": "1.公开接口",
+    "name": "H5全部分类",
+    "pass": true,
+    "detail": "7个分类"
+  },
+  {
+    "module": "1.公开接口",
+    "name": "H5分类详情",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "1.公开接口",
+    "name": "H5商品列表",
+    "pass": true,
+    "detail": "13个商品"
+  },
+  {
+    "module": "1.公开接口",
+    "name": "H5商品详情",
+    "pass": 104,
+    "detail": "name=机械键盘 客制化 青轴"
+  },
+  {
+    "module": "1.公开接口",
+    "name": "H5读系统参数",
+    "pass": true,
+    "detail": "{\"msg\":\"操作成功\",\"code\":200,\"data\":\"true\"}"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "注册-非11位账号被拒",
+    "pass": true,
+    "detail": "msg=账号必须为11位数字"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "注册-短密码被拒",
+    "pass": true,
+    "detail": "msg=密码须为6至20位，不能全为空格"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "注册成功(返回token)",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "重复注册被拒",
+    "pass": true,
+    "detail": "msg=该账号已注册，请直接登录"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "手机号校验接口",
+    "pass": true,
+    "detail": "{\"ifSuccess\":true,\"message\":\"该手机号可用\"}"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "登录-错误密码被拒",
+    "pass": true,
+    "detail": "msg=账号或密码错误"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "账号密码登录(base64报文)",
+    "pass": true,
+    "detail": "token前8=eyJhbGci"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "会员信息",
+    "pass": true,
+    "detail": "memberId=60 nick=用户6837"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "未登录访问被拒",
+    "pass": true,
+    "detail": "status=200 code=401"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "写入登录记录(void)",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "2.会员注册登录",
+    "name": "省市区数据(带token)",
+    "pass": true,
+    "detail": "status=200 body={\"msg\":\"操作成功\",\"code\":200,\"data\":[{\"id\":3"
+  },
+  {
+    "module": "3.积分签到",
+    "name": "积分活动页",
+    "pass": {
+      "signStatus": 1,
+      "signCount": 1,
+      "orderAmount": 1,
+      "orderCount": 1
+    },
+    "detail": "balance=0 signedToday=false"
+  },
+  {
+    "module": "3.积分签到",
+    "name": "每日签到得积分",
+    "pass": true,
+    "detail": "签到获得=1"
+  },
+  {
+    "module": "3.积分签到",
+    "name": "重复签到被去重",
+    "pass": true,
+    "detail": "status=200 resp={\"msg\":\"今天已经领取过签到积分\",\"code\":500}"
+  },
+  {
+    "module": "3.积分签到",
+    "name": "积分流水列表",
+    "pass": true,
+    "detail": "total=1"
+  },
+  {
+    "module": "3.积分签到",
+    "name": "积分统计",
+    "pass": true,
+    "detail": "{\"balance\":1,\"income\":0,\"expenditure\":0}"
+  },
+  {
+    "module": "4.会员等级(LV1)",
+    "name": "等级中心",
+    "pass": [
+      {
+        "level": 1,
+        "levelName": "新用户",
+        "upgradeCost": 0,
+        "pointMultiplier": 1,
+        "description": "购买商品、基础主页、积分任务"
+      },
+      {
+        "level": 2,
+        "levelName": "活跃用户",
+        "upgradeCost": 500,
+        "pointMultiplier": 1.1,
+        "description": "发表评论、等级徽章、基础昵称颜色"
+      },
+      {
+        "level": 3,
+        "levelName": "资深用户",
+        "upgradeCost": 1500,
+        "pointMultiplier": 1.15,
+        "description": "初级头像框、更多昵称颜色、特殊字体、评论徽章"
+      },
+      {
+        "level": 4,
+        "levelName": "核心用户",
+        "upgradeCost": 5000,
+        "pointMultiplier": 1.2,
+        "description": "中级头像框、主页背景、主题、专属表情、评论装饰、渐变昵称"
+      },
+      {
+        "level": 5,
+        "levelName": "荣誉用户",
+        "upgradeCost": 10000,
+        "pointMultiplier": 1.25,
+        "description": "荣誉徽章、高级头像框、昵称特效、主页铭牌、年度活跃标识"
+      }
+    ],
+    "detail": "level=1 balance=1"
+  },
+  {
+    "module": "4.会员等级(LV1)",
+    "name": "商品评论列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "4.会员等级(LV1)",
+    "name": "LV1发评论被拒(需LV2)",
+    "pass": true,
+    "detail": "msg=发表评论需要 LV2"
+  },
+  {
+    "module": "4.会员等级(LV1)",
+    "name": "升级-积分不足被拒",
+    "pass": true,
+    "detail": "msg=积分不足，请参加积分活动"
+  },
+  {
+    "module": "4.会员等级(LV1)",
+    "name": "装扮-参数不全被拒",
+    "pass": true,
+    "detail": "msg=外观参数无效"
+  },
+  {
+    "module": "4.会员等级(LV1)",
+    "name": "保存LV1可用装扮(default)",
+    "pass": true,
+    "detail": "status=200 msg="
+  },
+  {
+    "module": "4.会员等级(LV1)",
+    "name": "装扮-超等级被拒",
+    "pass": true,
+    "detail": "msg=尚未解锁此外观"
+  },
+  {
+    "module": "5.收货地址",
+    "name": "新建地址",
+    "pass": true,
+    "detail": "status=200 resp=1"
+  },
+  {
+    "module": "5.收货地址",
+    "name": "地址列表(读回ID)",
+    "pass": true,
+    "detail": "addressId=42"
+  },
+  {
+    "module": "5.收货地址",
+    "name": "默认地址",
+    "pass": true,
+    "detail": "{\"createBy\":null,\"createTime\":\"2026-09-12 19:09:37"
+  },
+  {
+    "module": "5.收货地址",
+    "name": "修改地址(接口返回)",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "5.收货地址",
+    "name": "修改后地址归属保持(member_id非NULL)",
+    "pass": false,
+    "detail": "DB member_id=NULL 【产品缺陷:update-strategy=ignored 将 member_id 置空,前端编辑地址后地址丢失】"
+  },
+  {
+    "module": "5.收货地址",
+    "name": "地址详情",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "5.收货地址",
+    "name": "第二地址",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "5.收货地址",
+    "name": "删除地址(用另一条验证)",
+    "pass": true,
+    "detail": "addr2=43 status=200"
+  },
+  {
+    "module": "5.收货地址",
+    "name": "下单地址就绪",
+    "pass": true,
+    "detail": "orderAddressId=44"
+  },
+  {
+    "module": "6.购物车",
+    "name": "取SKU",
+    "pass": true,
+    "detail": "productId=104 skuId=104 price=239"
+  },
+  {
+    "module": "6.购物车",
+    "name": "加入购物车",
+    "pass": true,
+    "detail": "status=200 resp=1"
+  },
+  {
+    "module": "6.购物车",
+    "name": "购物车列表(读回ID)",
+    "pass": true,
+    "detail": "cartId=231"
+  },
+  {
+    "module": "6.购物车",
+    "name": "购物车-无效SKU被拒",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "6.购物车",
+    "name": "购物车数量",
+    "pass": false,
+    "detail": "count={\"msg\":\"获取用户ID异常\",\"code\":401}"
+  },
+  {
+    "module": "6.购物车",
+    "name": "购物车ID列表",
+    "pass": false,
+    "detail": "ids={\"msg\":\"获取用户ID异常\",\"code\":401}"
+  },
+  {
+    "module": "6.购物车",
+    "name": "修改数量",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "6.购物车",
+    "name": "删除购物车项",
+    "pass": true,
+    "detail": "cart2=232 status=200"
+  },
+  {
+    "module": "7.管理端认证",
+    "name": "管理员登录(captcha临时关闭)",
+    "pass": true,
+    "detail": "status=200 msg=操作成功"
+  },
+  {
+    "module": "7.管理端认证",
+    "name": "管理员getInfo",
+    "pass": true,
+    "detail": "user=admin"
+  },
+  {
+    "module": "7.管理端认证",
+    "name": "动态路由",
+    "pass": true,
+    "detail": "10个顶级菜单"
+  },
+  {
+    "module": "7.管理端认证",
+    "name": "会员token访问管理端被拒",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "7.管理端认证",
+    "name": "管理员发放积分(adminChange)",
+    "pass": true,
+    "detail": "status=200 resp=1"
+  },
+  {
+    "module": "7.管理端认证",
+    "name": "充值后余额>100",
+    "pass": true,
+    "detail": "{\"balance\":50001,\"income\":0,\"expenditure\":0}"
+  },
+  {
+    "module": "7.管理端认证",
+    "name": "直接覆盖余额被拒(业务规则)",
+    "pass": true,
+    "detail": "msg=请通过积分流水新增收入或支出调整积分，不可直接覆盖余额"
+  },
+  {
+    "module": "8.等级升级",
+    "name": "升级到LV2(耗500积分)",
+    "pass": true,
+    "detail": "status=200 msg="
+  },
+  {
+    "module": "8.等级升级",
+    "name": "等级已变更",
+    "pass": true,
+    "detail": "level=2 balance=49501"
+  },
+  {
+    "module": "8.等级升级",
+    "name": "LV2可选blue装扮",
+    "pass": true,
+    "detail": "msg="
+  },
+  {
+    "module": "8.等级升级",
+    "name": "LV2仍不能选LV4装扮",
+    "pass": true,
+    "detail": "msg=尚未解锁此外观"
+  },
+  {
+    "module": "8.等级升级",
+    "name": "LV2发表评论",
+    "pass": true,
+    "detail": "status=200 msg="
+  },
+  {
+    "module": "8.等级升级",
+    "name": "LV4专属表情被拒",
+    "pass": true,
+    "detail": "msg=专属表情需要 LV4"
+  },
+  {
+    "module": "8.等级升级",
+    "name": "评论列表含新评论",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "9.订单流程",
+    "name": "下单前校验",
+    "pass": true,
+    "detail": "status=200 resp={\"skuList\":[{\"productId\":104,\"skuId\":104,\"productName\":\"机械键盘"
+  },
+  {
+    "module": "9.订单流程",
+    "name": "提交订单(返回payId)",
+    "pass": true,
+    "detail": "orderAddressId=44 payId=7003465905555457 resp=7003465905555457"
+  },
+  {
+    "module": "9.订单流程",
+    "name": "下单校验-超库存被拒",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "9.订单流程",
+    "name": "第二笔订单(用于取消)",
+    "pass": true,
+    "detail": "payId2=7003465905932289"
+  },
+  {
+    "module": "9.订单流程",
+    "name": "取消未支付订单",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "9.订单流程",
+    "name": "订单分页列表",
+    "pass": true,
+    "detail": "2条 orderId=7003465905555456"
+  },
+  {
+    "module": "9.订单流程",
+    "name": "订单详情",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "9.订单流程",
+    "name": "订单状态计数",
+    "pass": true,
+    "detail": "{\"unpaid\":1,\"nosend\":0,\"noget\":0,\"aftersale\":0}"
+  },
+  {
+    "module": "9.订单流程",
+    "name": "积分支付订单",
+    "pass": true,
+    "detail": "status=200 resp={\"payType\":3,\"appId\":null,\"timeStamp\":null,\"signType\":null,\""
+  },
+  {
+    "module": "9.订单流程",
+    "name": "重复支付被拒",
+    "pass": true,
+    "detail": "msg=订单已支付或已关闭，请刷新订单"
+  },
+  {
+    "module": "10.文件与反馈",
+    "name": "H5文件上传",
+    "pass": true,
+    "detail": "status=200 body={\"msg\":\"The endpoint \\\"null\\\" is invalid, please c"
+  },
+  {
+    "module": "10.文件与反馈",
+    "name": "意见反馈",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "用户列表",
+    "pass": true,
+    "detail": "total=1"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "新增用户",
+    "pass": true,
+    "detail": "msg=操作成功"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "修改用户",
+    "pass": true,
+    "detail": "msg=操作成功"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "重置密码",
+    "pass": true,
+    "detail": "msg=操作成功"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "删除用户",
+    "pass": true,
+    "detail": "msg=操作成功"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "角色列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "部门列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "岗位列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "菜单列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "字典类型",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "字典数据",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "参数设置",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "通知公告",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "操作日志",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "登录日志",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "在线用户",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "定时任务",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "服务监控",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "缓存监控",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "数据监控(禁用应拒绝)",
+    "pass": true,
+    "detail": "status=404"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "新增公告",
+    "pass": true,
+    "detail": "msg=操作成功"
+  },
+  {
+    "module": "11.系统管理",
+    "name": "删除公告",
+    "pass": true,
+    "detail": "msg=操作成功"
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "品牌列表",
+    "pass": true,
+    "detail": "total=5"
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "全部品牌下拉",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "新增品牌",
+    "pass": true,
+    "detail": "msg="
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "修改品牌",
+    "pass": true,
+    "detail": "id=112 status=200"
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "商品分类列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "新增分类",
+    "pass": true,
+    "detail": "msg="
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "读回分类ID",
+    "pass": true,
+    "detail": "id=112"
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "商品列表",
+    "pass": true,
+    "detail": "total=13"
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "新增商品",
+    "pass": true,
+    "detail": "msg="
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "商品详情",
+    "pass": true,
+    "detail": "id=120 status=200"
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "商品编辑上架",
+    "pass": true,
+    "detail": "status=200 body=1"
+  },
+  {
+    "module": "12.商品管理PMS",
+    "name": "SKU列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "13.会员管理UMS",
+    "name": "会员列表",
+    "pass": true,
+    "detail": "total=14"
+  },
+  {
+    "module": "13.会员管理UMS",
+    "name": "会员统计视图",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "13.会员管理UMS",
+    "name": "会员账户列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "13.会员管理UMS",
+    "name": "会员地址列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "13.会员管理UMS",
+    "name": "会员购物车列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "13.会员管理UMS",
+    "name": "反馈列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "13.会员管理UMS",
+    "name": "会员登录日志",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "14.订单管理OMS",
+    "name": "订单列表",
+    "pass": true,
+    "detail": "total=10"
+  },
+  {
+    "module": "14.订单管理OMS",
+    "name": "订单详情",
+    "pass": true,
+    "detail": "oid=7003465905555456 status=200 body={\"orderId\":7003465905555456,\"orderSn\":\"260912-7003"
+  },
+  {
+    "module": "14.订单管理OMS",
+    "name": "订单操作日志",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "14.订单管理OMS",
+    "name": "订单发货",
+    "pass": true,
+    "detail": "status=200 resp=发货成功"
+  },
+  {
+    "module": "14.订单管理OMS",
+    "name": "订单发货后状态",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "14.订单管理OMS",
+    "name": "申请售后(退货退款)",
+    "pass": true,
+    "detail": "status=200 resp=true"
+  },
+  {
+    "module": "14.订单管理OMS",
+    "name": "售后详情",
+    "pass": true,
+    "detail": "status=200 resp={\"createBy\":60,\"createTime\":\"2026-09-12 19:09:39\","
+  },
+  {
+    "module": "14.订单管理OMS",
+    "name": "撤销售后",
+    "pass": true,
+    "detail": "status=200 resp=售后取消成功"
+  },
+  {
+    "module": "14.订单管理OMS",
+    "name": "售后列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "15.营销管理ACT",
+    "name": "积分流水列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "15.营销管理ACT",
+    "name": "优惠券活动列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "15.营销管理ACT",
+    "name": "会员优惠券列表",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "15.营销管理ACT",
+    "name": "H5我的优惠券",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "15.营销管理ACT",
+    "name": "H5领券中心",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "15.营销管理ACT",
+    "name": "签到重置状态查询",
+    "pass": true,
+    "detail": "resp={\"date\":\"2026-09-12\",\"signedCount\":8,\"version\":1}"
+  },
+  {
+    "module": "15.营销管理ACT",
+    "name": "签到周期重置(乐观锁)",
+    "pass": true,
+    "detail": "status=200 resp={\"msg\":\"签到状态已经重置，请刷新后查看\",\"code\":500}"
+  },
+  {
+    "module": "16.数据统计",
+    "name": "商品统计TOP",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "16.数据统计",
+    "name": "订单统计",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "16.数据统计",
+    "name": "会员购物车统计",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "16.数据统计",
+    "name": "系统统计",
+    "pass": true,
+    "detail": "status=200"
+  },
+  {
+    "module": "17.清理",
+    "name": "删除测试商品",
+    "pass": true,
+    "detail": "id=120 status=200"
+  },
+  {
+    "module": "17.清理",
+    "name": "删除测试品牌",
+    "pass": true,
+    "detail": "id=112 status=200"
+  },
+  {
+    "module": "17.清理",
+    "name": "删除测试分类",
+    "pass": true,
+    "detail": "id=112 status=200"
+  },
+  {
+    "module": "17.清理",
+    "name": "验证码开关已恢复",
+    "pass": true,
+    "detail": "captchaOnOff=true"
+  }
+]
