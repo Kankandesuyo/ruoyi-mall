@@ -92,3 +92,5 @@ export function viewLog(orderId){
     method: 'get'
   })
 }
+
+export function cancelOrder(id, reason) { return request({ url: `/oms/order/${id}/cancel`, method: "post", data: { reason } }) }

@@ -670,8 +670,21 @@ public class H5OrderService {
      */
     @Transactional
     public Order applyRefund(ApplyRefundForm applyRefundForm) {
+        return applyRefundForMember(applyRefundForm, SecurityUtil.getLocalMember().getId());
+    }
+
+    private Order applyRefundForMember(ApplyRefundForm applyRefundForm, Long ownerId) {
         Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", applyRefundForm.getOrderId())
-            .eq("member_id", SecurityUtil.getLocalMember().getId()).last("FOR UPDATE"));
+            .eq("member_id", ownerId).last("FOR UPDATE"));
+        if (applyRefundForm.getApplyRefundType() == null ||
+                (applyRefundForm.getApplyRefundType() != 1 && applyRefundForm.getApplyRefundType() != 2)
+                || applyRefundForm.getReason() == null || applyRefundForm.getReason().trim().isEmpty()
+                || applyRefundForm.getReason().length() > 200
+                || (applyRefundForm.getDescription() != null && applyRefundForm.getDescription().length() > 500)) {
+            throw new RuntimeException("请填写有效的售后类型、原因和说明");
+        }
+        if (order != null && Integer.valueOf(1).equals(order.getStatus()) && applyRefundForm.getApplyRefundType() != 1)
+            throw new RuntimeException("未发货订单请选择仅退款");
         //是否符合售后条件
         this.checkIfCanApplyRefund(order);
         LocalDateTime optDate = LocalDateTime.now();
@@ -685,7 +698,8 @@ public class H5OrderService {
         addAftersale.setType(applyRefundForm.getApplyRefundType());
         addAftersale.setStatus(AftersaleStatus.APPLY.getType());
         addAftersale.setReason(applyRefundForm.getReason());
-        addAftersale.setQuantity(applyRefundForm.getQuantity());
+        addAftersale.setQuantity(orderItemMapper.selectList(new QueryWrapper<OrderItem>().eq("order_id", order.getId()))
+            .stream().mapToInt(OrderItem::getQuantity).sum());
         addAftersale.setReason(applyRefundForm.getReason());
         addAftersale.setDescription(applyRefundForm.getDescription());
         addAftersale.setProofPics(applyRefundForm.getProofPics());
@@ -755,6 +769,7 @@ public class H5OrderService {
         if (order == null) {
             throw new RuntimeException("为查询到订单信息");
         }
+        if (OrderRefundStatus.SUCCESS.getType().equals(order.getAftersaleStatus())) throw new RuntimeException("该订单已退款");
         Integer status = order.getStatus();
         boolean flag = OrderStatus.NOT_DELIVERED.getType().equals(status) || OrderStatus.DELIVERED.getType().equals(status)
                 || OrderStatus.COMPLETE.getType().equals(status);
@@ -779,7 +794,8 @@ public class H5OrderService {
      */
     @Transactional
     public String cancelRefund(Long orderId) {
-        Order order = orderMapper.selectById(orderId);
+        Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", orderId)
+            .eq("member_id", SecurityUtil.getLocalMember().getId()).last("FOR UPDATE"));
         if (order == null) {
             throw new RuntimeException("未查询到该订单");
         }
@@ -796,6 +812,8 @@ public class H5OrderService {
         }
         Member member = (Member) LocalDataUtil.getVar(Constants.MEMBER_INFO);
         LocalDateTime optDate = LocalDateTime.now();
+        if (aftersale.getRefundWaybillCode() != null && !aftersale.getRefundWaybillCode().isEmpty())
+            throw new RuntimeException("商品已寄回，无法撤销售后，请联系商家");
         //更新售后单状态
         UpdateWrapper<Aftersale> aftersaleUpdateWrapper = new UpdateWrapper<>();
         aftersaleUpdateWrapper.eq("id", aftersale.getId());
@@ -826,6 +844,7 @@ public class H5OrderService {
      * @return
      */
     public AftersaleRefundInfoVO refundOrderDetail(Long orderId) {
+        selectById(orderId);
         QueryWrapper<Aftersale> aftersaleQw = new QueryWrapper<>();
         aftersaleQw.eq("order_id", orderId);
         aftersaleQw.orderByDesc("create_time");
@@ -851,6 +870,58 @@ public class H5OrderService {
     }
 
     public Order selectById(Long orderId) {
-        return orderMapper.selectById(orderId);
+        Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", orderId)
+            .eq("member_id", SecurityUtil.getLocalMember().getId()));
+        if (order == null) throw new RuntimeException("未查询到本人订单");
+        return order;
     }
+    @Transactional(rollbackFor = Exception.class)
+    public void submitReturnDelivery(com.cyl.h5.domain.dto.DeliveryReq req) {
+        Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", req.getOrderId())
+            .eq("member_id", SecurityUtil.getLocalMember().getId()).last("FOR UPDATE"));
+        if (order == null) throw new RuntimeException("未查询到本人订单");
+        if (req.getDeliverySn() == null || !req.getDeliverySn().matches("[A-Za-z0-9-]{5,64}")
+                || req.getDeliveryCompanyCode() == null || req.getDeliveryCompanyCode().trim().isEmpty()
+                || req.getDeliveryCompanyCode().length() > 32) throw new RuntimeException("请填写有效的快递公司和物流单号");
+        Aftersale aftersale = aftersaleMapper.selectOne(new QueryWrapper<Aftersale>().eq("order_id", order.getId())
+            .eq("status", AftersaleStatus.WAIT.getType()).eq("type", 2));
+        if (aftersale == null) throw new RuntimeException("商家同意退货后才可提交物流");
+        aftersale.setRefundWpCode(req.getDeliveryCompanyCode().trim());
+        aftersale.setRefundWaybillCode(req.getDeliverySn());
+        if (aftersaleMapper.updateById(aftersale) != 1) throw new RuntimeException("物流提交失败");
+    }
+
+    @Autowired
+    private com.cyl.manager.oms.service.AftersaleService managerAftersaleService;
+
+    @Transactional(rollbackFor = Exception.class)
+    public String managerCancelOrder(Long orderId, String reason, Long adminId, String adminName) {
+        if (reason == null || reason.trim().isEmpty() || reason.length() > 180)
+            throw new RuntimeException("请填写 1–180 字取消原因");
+        Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", orderId).last("FOR UPDATE"));
+        if (order == null) throw new RuntimeException("订单不存在");
+        if (Integer.valueOf(0).equals(order.getStatus())) {
+            CancelOrderForm form = new CancelOrderForm();
+            form.setIdList(java.util.Collections.singletonList(orderId));
+            orderBatchCancel(form, null);
+        } else if (Integer.valueOf(1).equals(order.getStatus()) && Integer.valueOf(3).equals(order.getPayType())) {
+            ApplyRefundForm form = new ApplyRefundForm();
+            form.setOrderId(orderId); form.setApplyRefundType(1);
+            form.setReason("商家主动取消：" + reason.trim());
+            // The administrator endpoint supplies ownership from the locked order, never from client input.
+            applyRefundForMember(form, order.getMemberId());
+            com.cyl.manager.oms.domain.form.DealWithAftersaleForm decision = new com.cyl.manager.oms.domain.form.DealWithAftersaleForm();
+            decision.setOrderId(orderId); decision.setOptType(1); decision.setRemark(reason.trim());
+            managerAftersaleService.dealWith(decision, adminId, adminName);
+        } else {
+            throw new RuntimeException("仅待付款或积分已付未发货订单可主动取消；已发货订单请走退货售后");
+        }
+        OrderOperateHistory audit = new OrderOperateHistory();
+        audit.setOrderId(orderId); audit.setOrderSn(order.getOrderSn()); audit.setOrderStatus(4);
+        audit.setOperateMan(adminName); audit.setNote("商家主动取消：" + reason.trim());
+        audit.setCreateBy(adminId); audit.setCreateTime(LocalDateTime.now());
+        if (orderOperateHistoryMapper.insert(audit) != 1) throw new RuntimeException("取消记录保存失败");
+        return Integer.valueOf(0).equals(order.getStatus()) ? "订单已取消，库存已释放" : "订单已取消，积分已全额退回";
+    }
+
 }

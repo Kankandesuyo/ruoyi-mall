@@ -285,7 +285,7 @@ public class OrderService {
     @Transactional
     public String deliverProduct(DeliverProductForm request, Long userId) {
         //查询订单
-        Order order = orderMapper.selectById(request.getOrderId());
+        Order order = orderMapper.selectOne(new QueryWrapper<Order>().eq("id", request.getOrderId()).last("FOR UPDATE"));
         QueryWrapper<OrderItem> qw = new QueryWrapper<>();
         qw.eq("order_id", request.getOrderId());
         List<OrderItem> orderItemList = orderItemMapper.selectList(qw);

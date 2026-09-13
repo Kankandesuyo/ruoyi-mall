@@ -1,5 +1,9 @@
 <template>
   <div class="app-container" v-if="show">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+      <el-button type="primary" plain @click="$router.push('/order/aftersale')" v-hasPermi="['oms:aftersale:list']">退货退款 / 售后管理</el-button>
+      <span style="color:#606266">右侧操作栏可主动取消订单；已付积分未发货订单将自动退款。</span>
+    </div>
     <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="100px" size="medium"
              class="ry_form">
       <el-form-item label="订单状态" prop="status">
@@ -151,6 +155,7 @@
               class="el-icon-document-copy el-icon--right"></i></el-link>
           </div>
           <div style="float: right">
+            <el-button v-if="scope.row.status === 0 || (scope.row.status === 1 && scope.row.payType === 3)" v-hasPermi="['oms:order:edit']" size="mini" type="danger" plain @click="handleCancelOrder(scope.row)">{{ scope.row.status === 0 ? '主动取消订单' : '取消并退积分' }}</el-button>
             <el-button
               size="mini"
               type="text"
@@ -270,6 +275,7 @@
 
 <script>
 import {
+  cancelOrder,
   addOmsOrder,
   deliverProduct,
   delOmsOrder,
@@ -460,6 +466,14 @@ export default {
         this.total = totalElements;
         this.loading = false;
       });
+    },
+    async handleCancelOrder(row) {
+      try {
+        const { value } = await this.$prompt(row.status === 0 ? '关闭订单并释放库存，请填写取消原因：' : '关闭订单并将实付积分全额退回用户，请填写取消原因：', '管理员主动取消订单', { type: 'warning', inputPattern: /\S/, inputValidator: value => !!value && value.trim().length > 0 && value.length <= 180 || '请填写 1–180 字取消原因', confirmButtonText: '确认取消订单' });
+        await cancelOrder(row.id, value.trim());
+        this.$message.success('订单已取消');
+        this.getList();
+      } catch (_) {}
     },
     // 取消按钮
     cancel() {

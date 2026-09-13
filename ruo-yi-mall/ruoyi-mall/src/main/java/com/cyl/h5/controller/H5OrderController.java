@@ -159,6 +159,7 @@ public class H5OrderController {
     }
 
     @ApiOperation("申请售后")
+    @org.springframework.transaction.annotation.Transactional(rollbackFor = Exception.class)
     @PostMapping("/applyRefund")
     public ResponseEntity<Boolean> applyRefund(@RequestBody ApplyRefundForm applyRefundForm){
         String redisKey = "h5_oms_order_applyRefund_" + applyRefundForm.getOrderId();
@@ -221,22 +222,7 @@ public class H5OrderController {
         String redisValue = req.getOrderId()+"_"+System.currentTimeMillis();
         try {
             redisService.lock(redisKey, redisValue, 60);
-            Order order = service.selectById(req.getOrderId());
-            Aftersale aftersale = aftersaleService.queryAfterSale(req.getOrderId());
-            if(order == null || aftersale == null){
-                return AjaxResult.error("未查询到订单信息");
-            }
-            //仅退款不需要退货
-            if(aftersale.getType() == 1){
-                return AjaxResult.error("仅退款不需要退货");
-            }
-            if(aftersale.getStatus() != AftersaleStatus.WAIT.getType()){
-                return AjaxResult.error("当前状态不可退货");
-            }
-            //更新退款单
-            aftersale.setRefundWpCode(req.getDeliveryCompanyCode());
-            aftersale.setRefundWaybillCode(req.getDeliverySn());
-            aftersaleService.update(aftersale);
+            service.submitReturnDelivery(req);
 
             return AjaxResult.success();
         }catch (Exception e){

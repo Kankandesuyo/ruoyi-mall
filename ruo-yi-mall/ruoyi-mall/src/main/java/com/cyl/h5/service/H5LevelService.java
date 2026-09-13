@@ -79,7 +79,6 @@ public class H5LevelService {
   if(level<2) throw new IllegalArgumentException("发表评论需要 LV2");
   if(content==null || content.trim().isEmpty() || content.length()>500 || content.matches("(?s).*[\\p{Cntrl}&&[^\\n\\t]].*")) throw new IllegalArgumentException("评论须为1至500字");
   if(levels.productExists(product)!=1) throw new IllegalArgumentException("商品不存在或已下架");
-  if(levels.recentComments(id)>0) throw new IllegalArgumentException("评论过于频繁，请30秒后重试");
   if(levels.comment(id,product,content.trim(),emote)!=1) throw new IllegalStateException("评论保存失败");
  }
 }

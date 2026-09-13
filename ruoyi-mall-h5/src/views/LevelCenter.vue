@@ -1,5 +1,6 @@
 <template>
- <div v-loading="loading" class="level-center" :class="'theme-'+data.appearance?.theme">
+ <div v-loading="loading" class="level-center">
+  <LevelCelebration v-model:visible="celebrating" :level="data.level" :name="data.current?.levelName" />
   <div class="heading"><div><span class="eyebrow">MEMBER CLUB</span><h1>等级中心</h1><p>用积分解锁更多身份与权益，每一次成长都由你决定。</p></div><el-button @click="$router.push('/points')">赚取积分</el-button></div>
   <template v-if="data.current">
    <section class="hero"><MemberIdentity :user="data"/><div class="metrics"><div><span>可用积分</span><b>{{data.balance}}</b></div><div><span>积分获取倍率</span><b>×{{data.current.pointMultiplier.toFixed(2)}}</b></div><div><span>当前身份</span><b>{{data.current.levelName}}</b></div></div></section>
@@ -15,13 +16,22 @@
       <MemberAvatar :avatar="data.avatar" :nickname="data.nickname" :frame="frame" />
       <b>{{labels[frame] || frame}}</b><small>{{ required>data.level ? 'LV'+required+' 解锁' : draft.frame===frame ? '已选择 · 保存后生效' : '可使用' }}</small>
      </button>
-    </div><div class="appearance-form"><label v-for="(options,key) in data.options" :key="key">{{categoryLabels[key]}}<el-select v-model="draft[key]"><el-option v-for="(required,value) in options" v-show="required<=data.level" :key="value" :label="labels[value] || value" :value="value" :disabled="required>data.level"/></el-select></label></div><el-button type="primary" :loading="saving" @click="save">保存外观</el-button></el-card>
+    </div><div class="appearance-form"><label v-for="(options,key) in data.options" :key="key">{{categoryLabels[key]}}<el-select v-model="draft[key]"><el-option v-for="(required,value) in options" v-show="required<=data.level" :key="value" :label="labels[value] || value" :value="value" :disabled="required>data.level"/></el-select></label></div>
+    <p class="hint">客户端主题改变导航、按钮和页面底色；主页背景展示在个人中心封面。下方为预览，保存后生效。</p>
+    <div class="appearance-preview" :class="'club-theme-'+(draft.theme || 'default')">
+      <div class="preview-nav">若依商城 <span>{{labels[draft.theme] || '默认'}}主题 · 预览</span></div>
+      <section class="profile-cover" :class="'cover-'+(draft.background || 'default')"><span class="cover-caption">我的会员主页 · {{labels[draft.background] || '默认'}}背景</span><MemberIdentity :user="{...data,appearance:draft}" /></section>
+      <div class="preview-action">主题按钮效果</div>
+    </div>
+    <el-button type="primary" :loading="saving" @click="save">保存外观</el-button></el-card>
   </template><el-empty v-else-if="!loading" description="等级信息暂时不可用"><el-button @click="load">重试</el-button></el-empty>
  </div>
 </template>
 <script setup>
 import {ref,computed,onMounted} from 'vue'
 import {ElMessage,ElMessageBox} from 'element-plus'
+import LevelCelebration from '@/components/LevelCelebration.vue'
+const celebrating=ref(false)
 import MemberIdentity from '@/components/MemberIdentity.vue'
 import MemberAvatar from '@/components/MemberAvatar.vue'
 import CommentCard from '@/components/CommentCard.vue'
@@ -33,7 +43,7 @@ const categoryLabels={nicknameStyle:'昵称颜色',frame:'头像框',font:'字�
 const labels={default:'默认',white:'白色',blue:'蓝色',green:'绿色',purple:'紫色',rose:'玫瑰',amber:'琥珀',gradient:'渐变',glow:'柔光',silver:'冰晶银冠',aurora:'耀金圣冠',gold:'曜黑尊冠',serif:'衬线字体',rounded:'舒展字体',ocean:'海洋',forest:'森林'}
 function update(value){data.value=value;draft.value={...value.appearance};window.dispatchEvent(new CustomEvent('member-theme',{detail:value.appearance?.theme || 'default'}))}
 async function load(){loading.value=true;try{update((await levelCenter()).data)}catch{}finally{loading.value=false}}
-async function upgrade(){if(busy.value)return;busy.value=true;const current=data.value.level,next=data.value.next;try{await ElMessageBox.confirm(`升级 LV${next.level} 将消耗 ${next.upgradeCost} 积分，升级后无法恢复，是否继续？`,'确认升级',{confirmButtonText:'确认升级',cancelButtonText:'取消',type:'warning'});update((await upgradeLevel(current)).data);ElMessage.success('升级成功，新权益已解锁')}catch(e){if(e!=='cancel' && e!=='close')await load()}finally{busy.value=false}}
+async function upgrade(){if(busy.value)return;busy.value=true;const current=data.value.level,next=data.value.next;try{await ElMessageBox.confirm(`升级 LV${next.level} 将消耗 ${next.upgradeCost} 积分，升级后无法恢复，是否继续？`,'确认升级',{confirmButtonText:'确认升级',cancelButtonText:'取消',type:'warning'});update((await upgradeLevel(current)).data);celebrating.value=true}catch(e){if(e!=='cancel' && e!=='close')await load()}finally{busy.value=false}}
 async function save(){saving.value=true;try{update((await saveAppearance(draft.value)).data);ElMessage.success('外观已保存')}catch{}finally{saving.value=false}}
 onMounted(load)
 </script>

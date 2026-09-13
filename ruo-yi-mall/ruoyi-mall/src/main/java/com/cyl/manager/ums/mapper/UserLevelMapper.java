@@ -17,7 +17,6 @@ public interface UserLevelMapper {
  @Select("SELECT c.id,c.content,c.emote,c.create_time AS createTime,c.member_id AS memberId FROM product_comment c WHERE product_id=#{product} AND c.id>#{after} ORDER BY c.id LIMIT 20")
  List<Map<String,Object>> comments(@Param("product") Long product,@Param("after") long after);
  @Select("SELECT COUNT(*) FROM pms_product WHERE id=#{id} AND publish_status=1") int productExists(Long id);
- @Select("SELECT COUNT(*) FROM product_comment WHERE member_id=#{id} AND create_time > DATE_SUB(NOW(), INTERVAL 30 SECOND)") int recentComments(Long id);
  @Insert("INSERT INTO product_comment(member_id,product_id,content,emote,create_time) VALUES(#{id},#{product},#{content},#{emote},NOW())")
  int comment(@Param("id") Long id,@Param("product") Long product,@Param("content") String content,@Param("emote") String emote);
 }

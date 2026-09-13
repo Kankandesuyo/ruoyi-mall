@@ -70,3 +70,8 @@ export function countOrder() {
     method: 'get'
   })
 }
+
+export const applyRefund = data => request({ url: '/h5/order/applyRefund', method: 'post', data })
+export const refundDetail = orderId => request({ url: '/h5/order/refundOrderDetail', params: { orderId } })
+export const cancelRefund = orderId => request({ url: '/h5/order/cancelRefund', params: { orderId } })
+export const returnDelivery = data => request({ url: '/h5/order/aftersale/delivery', method: 'post', data })

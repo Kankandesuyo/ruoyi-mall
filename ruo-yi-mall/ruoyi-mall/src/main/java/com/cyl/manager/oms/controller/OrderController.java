@@ -43,6 +43,18 @@ public class OrderController extends BaseController {
     @Autowired
     private RedisService redisService;
 
+    @Autowired
+    private com.cyl.h5.service.H5OrderService h5OrderService;
+
+    @ApiOperation("后台主动取消订单")
+    @PreAuthorize("@ss.hasPermi('oms:order:edit')")
+    @Log(title = "取消订单", businessType = BusinessType.UPDATE)
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<String> cancel(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        return ResponseEntity.ok(h5OrderService.managerCancelOrder(id, body.get("reason"),
+            SecurityUtils.getUserId(), SecurityUtils.getUsername()));
+    }
+
     @ApiOperation("查询订单表列表")
     @PreAuthorize("@ss.hasPermi('oms:order:list')")
     @PostMapping("/list")

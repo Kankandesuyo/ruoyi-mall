@@ -104,6 +104,7 @@ public class AftersaleController extends BaseController {
     }
 
     @ApiOperation("售后订单操作")
+    @PreAuthorize("@ss.hasAnyPermi('oms:aftersale:edit,manager:oms:aftersale:update')")
     @PostMapping("/dealWith")
     public ResponseEntity<Boolean> updateStatus(@RequestBody DealWithAftersaleForm request){
         LoginUser user = SecurityUtils.getLoginUser();

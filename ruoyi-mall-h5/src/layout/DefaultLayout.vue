@@ -183,5 +183,3 @@ function handleCommand(cmd) {
   font-size: 12px;
 }
 </style>
-
-<style scoped>.club-theme-ocean{background:#eff7fc;--el-color-primary:#287c9d}.club-theme-forest{background:#f0f7f0;--el-color-primary:#347657}</style>

@@ -1,5 +1,6 @@
 <template>
   <div class="app-container">
+    <el-alert title="退货退款处理：审核用户申请 → 用户寄回并填写物流 → 商家确认收货后退款。主动取消未发货订单请到订单列表操作。" type="info" :closable="false" style="margin-bottom:16px" />
     <div v-show="show">
       <el-form :model="queryParams" ref="queryForm" :inline="true" v-show="showSearch" label-width="100px" size="medium" class="ry_form">
         <el-form-item label="申请状态" prop="status">
@@ -88,14 +89,14 @@
                        v-hasPermi="['oms:aftersale:log']">日志
             </el-button>
             <el-button size="mini" type="text" @click="approve(scope.row, 1)"
-                       v-if="scope.row.aftersaleStatus == 0" v-hasPermi="['manager:oms:aftersale:update']">同意
+                       v-if="scope.row.aftersaleStatus == 0" v-hasPermi="['oms:aftersale:edit', 'manager:oms:aftersale:update']">同意
             </el-button>
             <el-button size="mini" type="text" @click="handleOpen(scope.row, 2)" class="red"
-                       v-if="scope.row.aftersaleStatus == 0" v-hasPermi="['manager:oms:aftersale:update']">拒绝
+                       v-if="scope.row.aftersaleStatus == 0" v-hasPermi="['oms:aftersale:edit', 'manager:oms:aftersale:update']">拒绝
             </el-button>
             <el-button size="mini" type="text" @click="confirmReceive(scope.row, 3)"
                        v-if="scope.row.aftersaleStatus == 1 && scope.row.applyRefundType == 2"
-                       v-hasPermi="['manager:oms:aftersale:update']">确认收货
+                       v-hasPermi="['oms:aftersale:edit', 'manager:oms:aftersale:update']">确认收货
             </el-button>
           </template>
         </el-table-column>

@@ -1,6 +1,9 @@
 <template>
   <div v-loading="loading" class="profile-page">
-    <MemberIdentity v-if="identity.level" :user="identity" />
+    <section class="profile-cover" :class="'cover-'+(identity.appearance?.background || 'default')">
+      <span class="cover-caption">我的会员主页</span>
+      <MemberIdentity v-if="identity.level" :user="identity" />
+    </section>
     <el-button type="primary" @click="$router.push('/level')">等级中心 · 升级与身份外观</el-button>
     <!-- 会员信息卡 -->
     <div class="user-card">
@@ -199,7 +202,7 @@ function goOrders(status) {
   min-height: 400px;
 }
 .user-card {
-  background: linear-gradient(135deg, #ff4400, #ff7a45);
+  background: var(--club-banner, linear-gradient(135deg, #ff4400, #ff7a45));
   border-radius: 8px;
   padding: 24px;
   display: flex;

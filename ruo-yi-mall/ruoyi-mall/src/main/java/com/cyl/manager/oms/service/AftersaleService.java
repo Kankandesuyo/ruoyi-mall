@@ -259,6 +259,11 @@ public class AftersaleService {
         if (aftersale == null) {
             throw new RuntimeException("没有售后单");
         }
+        if (request.getOptType() == null || !Arrays.asList(1, 2, 3).contains(request.getOptType()))
+            throw new RuntimeException("无效的售后操作");
+        if (Integer.valueOf(3).equals(request.getOptType()) && Integer.valueOf(2).equals(aftersale.getType())
+                && StrUtil.isBlank(aftersale.getRefundWaybillCode()))
+            throw new RuntimeException("用户尚未提交退货物流，不能确认验收退款");
         //售后状态与售后类型是否对应
         if (Constants.OptType.AGREE.equals(request.getOptType()) || Constants.OptType.REFUSE.equals(request.getOptType())) {
             if (!AftersaleStatus.APPLY.getType().equals(aftersale.getStatus())) {
@@ -286,7 +291,8 @@ public class AftersaleService {
         //封装售后wrapper
         UpdateWrapper<Aftersale> aftersaleWrapper = new UpdateWrapper<>();
         aftersaleWrapper.eq("order_id", request.getOrderId());
-        aftersaleWrapper.eq("status", AftersaleStatus.APPLY.getType());
+        aftersaleWrapper.eq("id", aftersale.getId());
+        aftersaleWrapper.eq("status", aftersale.getStatus());
         aftersaleWrapper.set("handle_man", optUserName);
         aftersaleWrapper.set("update_time", optDate);
         aftersaleWrapper.set("handle_time", optDate);
@@ -303,6 +309,7 @@ public class AftersaleService {
             orderWrapper.set("aftersale_status", OrderRefundStatus.NO_REFUND.getType());
             optHistory.setOrderStatus(14);
         } else if (request.getOptType().equals(Constants.OptType.AGREE)) {
+            aftersaleWrapper.set("handle_note", request.getRemark());
             aftersaleWrapper.set("status", AftersaleStatus.WAIT.getType());
             orderWrapper.set("aftersale_status", Objects.equals(aftersale.getType(), 1) ? 3 : 2);
             optHistory.setOrderStatus(12);
